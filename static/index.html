@@ -1,0 +1,861 @@
+35<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZCDC – Vendor Payments System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#181c26;--card:#1e2333;--border:#2a3045;
+  --accent:#4f8ef7;--accent2:#22d3a5;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;
+  --text:#e8ecf4;--muted:#7a8499;--faint:#3a4155;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6;min-height:100vh;display:flex}
+
+/* SIDEBAR */
+aside{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:24px 20px 16px;border-bottom:1px solid var(--border)}
+.logo-mark{font-size:11px;font-weight:600;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
+.logo-name{font-size:15px;font-weight:600;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--muted);margin-top:2px}
+nav{padding:12px 0;flex:1}
+.nav-section{padding:16px 16px 6px;font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--muted);cursor:pointer;transition:all .15s;font-size:13px;border-left:3px solid transparent}
+.nav-item:hover{color:var(--text);background:var(--card)}
+.nav-item.active{color:var(--accent);background:rgba(79,142,247,.08);border-left-color:var(--accent)}
+.nav-icon{width:16px;text-align:center;flex-shrink:0}
+
+/* MAIN */
+main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
+.topbar-title{font-size:16px;font-weight:600}
+.topbar-sub{font-size:12px;color:var(--muted)}
+.topbar-user{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff}
+
+.content{flex:1;overflow-y:auto;padding:28px}
+.section{display:none}
+.section.active{display:block}
+
+/* CARDS & STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.stat-value{font-size:24px;font-weight:600;color:var(--text);font-family:var(--mono)}
+.stat-card.accent .stat-value{color:var(--accent)}
+.stat-card.warn .stat-value{color:var(--warn)}
+.stat-card.danger .stat-value{color:var(--danger)}
+.stat-card.success .stat-value{color:var(--success)}
+
+/* TABLES */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-weight:600;font-size:14px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 16px;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface)}
+td{padding:11px 16px;border-bottom:1px solid var(--faint);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-draft{background:rgba(122,132,153,.15);color:var(--muted)}
+.badge-submitted{background:rgba(245,158,11,.12);color:var(--warn)}
+.badge-verified{background:rgba(79,142,247,.12);color:var(--accent)}
+.badge-approved{background:rgba(34,211,165,.12);color:var(--accent2)}
+.badge-rejected{background:rgba(239,68,68,.12);color:var(--danger)}
+.badge-scheduled{background:rgba(168,85,247,.15);color:#c084fc}
+.badge-partial{background:rgba(245,158,11,.15);color:var(--warn)}
+.badge-paid{background:rgba(34,197,94,.12);color:var(--success)}
+.badge-0-30{background:rgba(34,197,94,.1);color:var(--success)}
+.badge-31-60{background:rgba(245,158,11,.12);color:var(--warn)}
+.badge-61-90{background:rgba(249,115,22,.12);color:#fb923c}
+.badge-91{background:rgba(239,68,68,.12);color:var(--danger)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none;font-family:var(--font)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#3a7ce8}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--faint)}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2)}
+.btn-success{background:rgba(34,197,94,.1);color:var(--success);border:1px solid rgba(34,197,94,.2)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+
+/* MODALS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:28px;transform:translateY(12px);transition:transform .2s}
+.overlay.open .modal{transform:translateY(0)}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+.modal-footer{margin-top:24px;display:flex;gap:10px;justify-content:flex-end}
+
+/* FORMS */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+.field input,.field select,.field textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field select option{background:var(--card)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* AGING TABLE */
+.aging-table th,.aging-table td{font-size:12px}
+.aging-total-row td{font-weight:600;background:rgba(79,142,247,.05);color:var(--text)}
+
+/* ACTION MENU */
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* WORKFLOW TIMELINE */
+.timeline{padding:16px 0}
+.tl-item{display:flex;gap:12px;padding:8px 0;position:relative}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0}
+.tl-dot.rejected{background:var(--danger)}
+.tl-dot.paid{background:var(--success)}
+.tl-line{position:absolute;left:3px;top:20px;bottom:-8px;width:1px;background:var(--border)}
+.tl-item:last-child .tl-line{display:none}
+.tl-action{font-size:13px;font-weight:500;color:var(--text)}
+.tl-meta{font-size:12px;color:var(--muted)}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:2000}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;min-width:220px;animation:slideup .25s ease;display:flex;align-items:center;gap:10px}
+.toast.success{border-color:rgba(34,197,94,.3);color:var(--success)}
+.toast.error{border-color:rgba(239,68,68,.3);color:var(--danger)}
+@keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* DETAIL PANEL */
+.detail-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:20px}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:14px}
+.detail-item .dl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.detail-item .dv{font-size:14px;color:var(--text);margin-top:3px}
+
+/* FILTERS */
+.filter-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
+
+/* AMOUNT */
+.amount{font-family:var(--mono);font-size:13px}
+.amount-big{font-family:var(--mono);font-size:22px;font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="logo">
+    <div class="logo-mark">ZCDC</div>
+    <div class="logo-name">Vendor Payments</div>
+    <div class="logo-sub">Tracking System</div>
+  </div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard',this)">
+      <span class="nav-icon">▦</span> Dashboard
+    </div>
+    <div class="nav-section">Records</div>
+    <div class="nav-item" data-section="vendors" onclick="showSection('vendors',this)">
+      <span class="nav-icon">◈</span> Vendors
+    </div>
+    <div class="nav-item" data-section="invoices" onclick="showSection('invoices',this)">
+      <span class="nav-icon">◉</span> Invoices
+    </div>
+    <div class="nav-item" data-section="batches" onclick="showSection('batches',this)">
+      <span class="nav-icon">◐</span> Payment Batches
+    </div>
+    <div class="nav-section">Reports</div>
+    <div class="nav-item" data-section="outstanding" onclick="showSection('outstanding',this)">
+      <span class="nav-icon">◆</span> Outstanding
+    </div>
+    <div class="nav-item" data-section="aging" onclick="showSection('aging',this)">
+      <span class="nav-icon">◇</span> Aging Analysis
+    </div>
+    <div class="nav-item" data-section="backlog" onclick="showSection('backlog',this)">
+      <span class="nav-icon">▷</span> Approval Backlog
+    </div>
+    <div class="nav-item" data-section="schedule" onclick="showSection('schedule',this)">
+      <span class="nav-icon">▸</span> Pay Schedule
+    </div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main>
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-sub" id="page-sub">Overview of vendor payables</div>
+    </div>
+    <div class="topbar-user">
+      <span>finance_manager_alice</span>
+      <div class="avatar">FA</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <section id="sec-dashboard" class="section active">
+      <div class="stat-grid" id="dash-stats"></div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <span class="table-title">Recent Invoices</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-invoice')">+ New Invoice</button>
+        </div>
+        <table><thead><tr>
+          <th>Invoice #</th><th>Vendor</th><th>Date</th><th>Amount</th><th>Outstanding</th><th>Status</th><th>Age</th>
+        </tr></thead>
+        <tbody id="dash-invoices"></tbody></table>
+      </div>
+    </section>
+
+    <!-- VENDORS -->
+    <section id="sec-vendors" class="section">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="openModal('modal-vendor')">+ Add Vendor</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><span class="table-title">Vendor Master</span></div>
+        <table><thead><tr>
+          <th>Name</th><th>Category</th><th>Payment Terms</th><th>Bank</th>
+        </tr></thead>
+        <tbody id="vendors-table"></tbody></table>
+      </div>
+    </section>
+
+    <!-- INVOICES -->
+    <section id="sec-invoices" class="section">
+      <div class="filter-bar">
+        <select id="inv-filter-status" onchange="loadInvoices()">
+          <option value="">All Statuses</option>
+          <option>Draft</option><option>Submitted</option><option>Verified</option>
+          <option>Approved</option><option>Rejected</option><option>Scheduled</option>
+          <option>Partially Paid</option><option>Paid</option>
+        </select>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary" onclick="openModal('modal-invoice')">+ New Invoice</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><span class="table-title">Invoice Register</span></div>
+        <table><thead><tr>
+          <th>Invoice #</th><th>Vendor</th><th>Date</th><th>Total</th><th>Outstanding</th>
+          <th>Status</th><th>Age</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="invoices-table"></tbody></table>
+      </div>
+    </section>
+
+    <!-- BATCHES -->
+    <section id="sec-batches" class="section">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="openModal('modal-batch')">+ New Batch</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><span class="table-title">Payment Batches</span></div>
+        <table><thead><tr>
+          <th>Reference</th><th>Scheduled Date</th><th>Invoices</th><th>Total Scheduled</th><th>Created By</th>
+        </tr></thead>
+        <tbody id="batches-table"></tbody></table>
+      </div>
+    </section>
+
+    <!-- OUTSTANDING -->
+    <section id="sec-outstanding" class="section">
+      <div class="table-wrap">
+        <div class="table-header"><span class="table-title">Vendor Outstanding Summary</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadOutstanding()">↻ Refresh</button>
+        </div>
+        <table><thead><tr>
+          <th>Vendor</th><th>Category</th><th>Open Invoices</th><th>Total Outstanding</th>
+        </tr></thead>
+        <tbody id="outstanding-table"></tbody>
+        <tfoot><tr id="outstanding-footer"></tr></tfoot>
+      </div>
+    </section>
+
+    <!-- AGING -->
+    <section id="sec-aging" class="section">
+      <div class="table-wrap">
+        <div class="table-header"><span class="table-title">Aging Analysis (by Invoice Date)</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadAging()">↻ Refresh</button>
+        </div>
+        <table class="aging-table"><thead><tr>
+          <th>Vendor</th>
+          <th class="badge-0-30" style="color:inherit">0–30 days</th>
+          <th class="badge-31-60" style="color:inherit">31–60 days</th>
+          <th class="badge-61-90" style="color:inherit">61–90 days</th>
+          <th class="badge-91" style="color:inherit">91+ days</th>
+          <th>Total</th>
+        </tr></thead>
+        <tbody id="aging-table"></tbody>
+        <tfoot><tr id="aging-footer"></tr></tfoot>
+      </div>
+    </section>
+
+    <!-- BACKLOG -->
+    <section id="sec-backlog" class="section">
+      <div class="table-wrap">
+        <div class="table-header"><span class="table-title">Approval Backlog</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadBacklog()">↻ Refresh</button>
+        </div>
+        <table><thead><tr>
+          <th>Invoice #</th><th>Vendor</th><th>Date</th><th>Amount</th><th>Status</th><th>Cost Centre</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="backlog-table"></tbody></table>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section id="sec-schedule" class="section">
+      <div class="table-wrap">
+        <div class="table-header"><span class="table-title">Upcoming Payment Schedule</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadSchedule()">↻ Refresh</button>
+        </div>
+        <table><thead><tr>
+          <th>Batch</th><th>Scheduled Date</th><th>Vendor</th><th>Invoice #</th><th>Scheduled Amount</th>
+        </tr></thead>
+        <tbody id="schedule-table"></tbody></table>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- MODALS -->
+
+<!-- Add Vendor -->
+<div class="overlay" id="modal-vendor">
+  <div class="modal">
+    <div class="modal-title">Add Vendor</div>
+    <div class="modal-sub">Register a new local vendor</div>
+    <div class="field"><label>Vendor Name *</label><input id="v-name" placeholder="e.g. ABC Supplies Ltd"></div>
+    <div class="field-row">
+      <div class="field"><label>Category *</label>
+        <select id="v-cat"><option>Supplies</option><option>Services</option><option>Other</option></select>
+      </div>
+      <div class="field"><label>Payment Terms (days)</label><input id="v-terms" type="number" value="30"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Bank Name</label><input id="v-bank" placeholder="e.g. CABS"></div>
+      <div class="field"><label>Account Number</label><input id="v-account" placeholder="Account #"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-vendor')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitVendor()">Add Vendor</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Invoice -->
+<div class="overlay" id="modal-invoice">
+  <div class="modal">
+    <div class="modal-title">New Invoice / Claim</div>
+    <div class="modal-sub">Create a new vendor invoice record</div>
+    <div class="field-row">
+      <div class="field"><label>Invoice Number *</label><input id="i-num" placeholder="INV-2024-001"></div>
+      <div class="field"><label>Vendor *</label>
+        <select id="i-vendor"></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Invoice Date *</label><input id="i-date" type="date"></div>
+      <div class="field"><label>Due Date</label><input id="i-due" type="date"></div>
+    </div>
+    <div class="field"><label>Description *</label><input id="i-desc" placeholder="Goods/services description"></div>
+    <div class="field-row">
+      <div class="field"><label>Total Amount (USD) *</label><input id="i-amount" type="number" placeholder="0.00"></div>
+      <div class="field"><label>Cost Centre</label><input id="i-cc" placeholder="e.g. Mining-Ops"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Doc Reference</label><input id="i-doc" placeholder="PO / attachment ref"></div>
+      <div class="field"><label>Created By *</label><input id="i-by" value="clerk_jane"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-invoice')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitInvoice()">Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- Workflow Action -->
+<div class="overlay" id="modal-workflow">
+  <div class="modal">
+    <div class="modal-title" id="wf-title">Action</div>
+    <div class="modal-sub" id="wf-sub"></div>
+    <div class="field"><label>Performed By *</label><input id="wf-by" value="fin_officer_tom"></div>
+    <div class="field"><label id="wf-notes-label">Notes / Reason</label>
+      <input id="wf-notes" placeholder="Optional notes">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-workflow')">Cancel</button>
+      <button class="btn btn-primary" id="wf-btn" onclick="submitWorkflow()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Record Payment -->
+<div class="overlay" id="modal-payment">
+  <div class="modal">
+    <div class="modal-title">Record Payment</div>
+    <div class="modal-sub" id="pay-sub"></div>
+    <div class="field-row">
+      <div class="field"><label>Payment Date *</label><input id="pay-date" type="date"></div>
+      <div class="field"><label>Amount Paid *</label><input id="pay-amount" type="number" placeholder="0.00"></div>
+    </div>
+    <div class="field"><label>Bank Reference / Transaction ID</label><input id="pay-ref" placeholder="TXN-12345"></div>
+    <div class="field"><label>Recorded By *</label><input id="pay-by" value="treasury_officer_sue"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-payment')">Cancel</button>
+      <button class="btn btn-success" onclick="submitPayment()">Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add to Batch -->
+<div class="overlay" id="modal-add-batch">
+  <div class="modal">
+    <div class="modal-title">Add to Payment Batch</div>
+    <div class="modal-sub" id="addbatch-sub"></div>
+    <div class="field"><label>Select Batch *</label><select id="addbatch-bid"></select></div>
+    <div class="field"><label>Scheduled Amount *</label><input id="addbatch-amount" type="number" placeholder="0.00"></div>
+    <div class="field"><label>Added By *</label><input id="addbatch-by" value="treasury_officer_sue"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-batch')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddBatch()">Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Batch -->
+<div class="overlay" id="modal-batch">
+  <div class="modal">
+    <div class="modal-title">Create Payment Batch</div>
+    <div class="modal-sub">Schedule a new payment run</div>
+    <div class="field"><label>Batch Reference *</label><input id="b-ref" placeholder="BATCH-2024-APR-01"></div>
+    <div class="field"><label>Scheduled Date *</label><input id="b-date" type="date"></div>
+    <div class="field"><label>Notes</label><input id="b-notes" placeholder="e.g. Weekly payrun"></div>
+    <div class="field"><label>Created By *</label><input id="b-by" value="treasury_officer_sue"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-batch')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitBatch()">Create Batch</button>
+    </div>
+  </div>
+</div>
+
+<!-- Audit Trail -->
+<div class="overlay" id="modal-audit">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-title" id="audit-title">Audit Trail</div>
+    <div class="modal-sub" id="audit-sub"></div>
+    <div class="timeline" id="audit-timeline"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-audit')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+const API = '';
+let currentInvoiceId = null;
+let currentWorkflowAction = null;
+let currentPayInvoice = null;
+let currentAddBatchInvoice = null;
+
+const pageMeta = {
+  dashboard:{title:'Dashboard',sub:'Overview of vendor payables'},
+  vendors:{title:'Vendors',sub:'Vendor master register'},
+  invoices:{title:'Invoices',sub:'Invoice & claim register'},
+  batches:{title:'Payment Batches',sub:'Scheduled payment runs'},
+  outstanding:{title:'Outstanding Summary',sub:'Total payables by vendor'},
+  aging:{title:'Aging Analysis',sub:'Payables breakdown by age (from invoice date)'},
+  backlog:{title:'Approval Backlog',sub:'Invoices awaiting verification or approval'},
+  schedule:{title:'Payment Schedule',sub:'Upcoming scheduled payments'},
+};
+
+function showSection(name, el) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+  document.getElementById('page-title').textContent = pageMeta[name].title;
+  document.getElementById('page-sub').textContent = pageMeta[name].sub;
+  const loaders = {
+    dashboard: ()=>{loadDashboard();loadRecentInvoices()},
+    vendors: loadVendors,
+    invoices: loadInvoices,
+    batches: loadBatches,
+    outstanding: loadOutstanding,
+    aging: loadAging,
+    backlog: loadBacklog,
+    schedule: loadSchedule,
+  };
+  if(loaders[name]) loaders[name]();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = (type==='success'?'✓ ':'✗ ') + msg;
+  document.getElementById('toast-wrap').appendChild(t);
+  setTimeout(()=>t.remove(), 3200);
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click', e=>{if(e.target===o) o.classList.remove('open')});
+});
+
+// ── FORMAT ────────────────────────────────────────────────────────────────────
+function fmtMoney(v){
+  return '$'+Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function statusBadge(s){
+  const map={
+    'Draft':'badge-draft','Submitted':'badge-submitted','Verified':'badge-verified',
+    'Approved':'badge-approved','Rejected':'badge-rejected','Scheduled':'badge-scheduled',
+    'Partially Paid':'badge-partial','Paid':'badge-paid'
+  };
+  return `<span class="badge ${map[s]||''}">${s}</span>`;
+}
+
+function ageBadge(b){
+  const map={'0-30 days':'badge-0-30','31-60 days':'badge-31-60','61-90 days':'badge-61-90','91+ days':'badge-91'};
+  return `<span class="badge ${map[b]||''}">${b}</span>`;
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(path, method='GET', body=null){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(API+path, opts);
+  return r.json();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+async function loadDashboard(){
+  const d = await api('/api/reports/dashboard');
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card accent"><div class="stat-label">Total Outstanding</div><div class="stat-value">${fmtMoney(d.total_outstanding)}</div></div>
+    <div class="stat-card warn"><div class="stat-label">Pending Approval</div><div class="stat-value">${d.pending_approval}</div></div>
+    <div class="stat-card"><div class="stat-label">Approved (Unsched.)</div><div class="stat-value">${d.approved_unscheduled}</div></div>
+    <div class="stat-card"><div class="stat-label">Scheduled</div><div class="stat-value">${fmtMoney(d.scheduled_total)}</div></div>
+    <div class="stat-card danger"><div class="stat-label">Overdue 91+ days</div><div class="stat-value">${d.overdue_91plus}</div></div>
+    <div class="stat-card success"><div class="stat-label">Paid This Month</div><div class="stat-value">${fmtMoney(d.paid_this_month)}</div></div>
+  `;
+}
+
+async function loadRecentInvoices(){
+  const rows = await api('/api/invoices');
+  const tbody = document.getElementById('dash-invoices');
+  tbody.innerHTML = rows.slice(0,8).map(r=>`
+    <tr>
+      <td><span class="amount">${r.invoice_number}</span></td>
+      <td>${r.vendor_name}</td>
+      <td>${r.invoice_date}</td>
+      <td class="amount">${fmtMoney(r.total_amount)}</td>
+      <td class="amount">${fmtMoney(r.outstanding_amount)}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td>${ageBadge(r.age_bucket)}</td>
+    </tr>`).join('');
+}
+
+// ── VENDORS ───────────────────────────────────────────────────────────────────
+async function loadVendors(){
+  const rows = await api('/api/vendors');
+  document.getElementById('vendors-table').innerHTML = rows.map(r=>`
+    <tr>
+      <td><strong>${r.name}</strong></td>
+      <td>${r.category}</td>
+      <td>${r.payment_terms} days</td>
+      <td>${r.bank_name||'—'}</td>
+    </tr>`).join('');
+}
+
+async function submitVendor(){
+  const name = document.getElementById('v-name').value.trim();
+  if(!name){toast('Vendor name required','error');return;}
+  const r = await api('/api/vendors','POST',{
+    name, category:document.getElementById('v-cat').value,
+    payment_terms:parseInt(document.getElementById('v-terms').value)||30,
+    bank_name:document.getElementById('v-bank').value,
+    bank_account:document.getElementById('v-account').value,
+  });
+  if(r.ok){toast('Vendor added');closeModal('modal-vendor');loadVendors();populateVendorSelects();}
+  else toast(r.error,'error');
+}
+
+async function populateVendorSelects(){
+  const vendors = await api('/api/vendors');
+  const sel = document.getElementById('i-vendor');
+  sel.innerHTML = vendors.map(v=>`<option value="${v.vendor_id}">${v.name}</option>`).join('');
+}
+
+// ── INVOICES ──────────────────────────────────────────────────────────────────
+async function loadInvoices(){
+  const status = document.getElementById('inv-filter-status').value;
+  const url = '/api/invoices' + (status?`?status=${encodeURIComponent(status)}`:'');
+  const rows = await api(url);
+  document.getElementById('invoices-table').innerHTML = rows.map(r=>invoiceRow(r)).join('');
+}
+
+function invoiceRow(r){
+  const canSubmit = r.status==='Draft';
+  const canVerify = r.status==='Submitted';
+  const canApprove = r.status==='Verified';
+  const canReject = ['Submitted','Verified'].includes(r.status);
+  const canPay = ['Approved','Scheduled','Partially Paid'].includes(r.status);
+  const canSchedule = r.status==='Approved';
+
+  return `<tr>
+    <td><span class="amount">${r.invoice_number}</span></td>
+    <td>${r.vendor_name}</td>
+    <td>${r.invoice_date}</td>
+    <td class="amount">${fmtMoney(r.total_amount)}</td>
+    <td class="amount">${fmtMoney(r.outstanding_amount)}</td>
+    <td>${statusBadge(r.status)}</td>
+    <td>${ageBadge(r.age_bucket)}</td>
+    <td><div class="actions">
+      ${canSubmit?`<button class="btn btn-ghost btn-sm" onclick="openWorkflow('${r.invoice_id}','submit','Submit for Verification')">Submit</button>`:''}
+      ${canVerify?`<button class="btn btn-ghost btn-sm" onclick="openWorkflow('${r.invoice_id}','verify','Verify Invoice')">Verify</button>`:''}
+      ${canApprove?`<button class="btn btn-success btn-sm" onclick="openWorkflow('${r.invoice_id}','approve','Approve for Payment')">Approve</button>`:''}
+      ${canReject?`<button class="btn btn-danger btn-sm" onclick="openWorkflow('${r.invoice_id}','reject','Reject Invoice')">Reject</button>`:''}
+      ${canSchedule?`<button class="btn btn-ghost btn-sm" onclick="openAddBatch('${r.invoice_id}','${r.outstanding_amount}','${r.invoice_number}')">Schedule</button>`:''}
+      ${canPay?`<button class="btn btn-primary btn-sm" onclick="openPayment('${r.invoice_id}','${r.outstanding_amount}','${r.invoice_number}')">Pay</button>`:''}
+      <button class="btn btn-ghost btn-sm" onclick="openAudit('${r.invoice_id}','${r.invoice_number}')">Log</button>
+    </div></td>
+  </tr>`;
+}
+
+async function submitInvoice(){
+  const num = document.getElementById('i-num').value.trim();
+  const vid = document.getElementById('i-vendor').value;
+  const idate = document.getElementById('i-date').value;
+  const desc = document.getElementById('i-desc').value.trim();
+  const amount = parseFloat(document.getElementById('i-amount').value);
+  const by = document.getElementById('i-by').value.trim();
+  if(!num||!vid||!idate||!desc||!amount||!by){toast('Fill all required fields','error');return;}
+  const r = await api('/api/invoices','POST',{
+    invoice_number:num, vendor_id:vid, invoice_date:idate,
+    due_date:document.getElementById('i-due').value||null,
+    description:desc, total_amount:amount,
+    cost_centre:document.getElementById('i-cc').value,
+    doc_reference:document.getElementById('i-doc').value,
+    created_by:by,
+  });
+  if(r.ok){toast('Invoice created');closeModal('modal-invoice');loadInvoices();loadDashboard();}
+  else toast(r.error,'error');
+}
+
+// ── WORKFLOW ──────────────────────────────────────────────────────────────────
+function openWorkflow(id, action, label){
+  currentInvoiceId = id;
+  currentWorkflowAction = action;
+  document.getElementById('wf-title').textContent = label;
+  document.getElementById('wf-sub').textContent = `Invoice ID: ${id.substring(0,8)}…`;
+  document.getElementById('wf-notes-label').textContent = action==='reject'?'Rejection Reason *':'Notes (optional)';
+  document.getElementById('wf-notes').value='';
+  openModal('modal-workflow');
+}
+
+async function submitWorkflow(){
+  const r = await api(`/api/invoices/${currentInvoiceId}/workflow`,'POST',{
+    action:currentWorkflowAction,
+    performed_by:document.getElementById('wf-by').value||'system',
+    notes:document.getElementById('wf-notes').value,
+  });
+  if(r.ok){
+    toast(`Status → ${r.new_status}`);
+    closeModal('modal-workflow');
+    loadInvoices(); loadDashboard();
+  } else toast(r.error,'error');
+}
+
+// ── PAYMENT ───────────────────────────────────────────────────────────────────
+function openPayment(id, outstanding, invNo){
+  currentPayInvoice = id;
+  document.getElementById('pay-sub').textContent = `Invoice: ${invNo} — Outstanding: ${fmtMoney(outstanding)}`;
+  document.getElementById('pay-amount').value = outstanding;
+  document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
+  openModal('modal-payment');
+}
+
+async function submitPayment(){
+  const amount = parseFloat(document.getElementById('pay-amount').value);
+  const date = document.getElementById('pay-date').value;
+  const by = document.getElementById('pay-by').value.trim();
+  if(!amount||!date||!by){toast('Fill all required fields','error');return;}
+  const r = await api('/api/payments','POST',{
+    invoice_id:currentPayInvoice,
+    payment_date:date,
+    amount_paid:amount,
+    bank_reference:document.getElementById('pay-ref').value,
+    recorded_by:by,
+  });
+  if(r.ok){
+    toast(`Payment recorded – Status: ${r.new_status}`);
+    closeModal('modal-payment');
+    loadInvoices(); loadDashboard();
+  } else toast(r.error,'error');
+}
+
+// ── BATCH ─────────────────────────────────────────────────────────────────────
+async function loadBatches(){
+  const rows = await api('/api/batches');
+  document.getElementById('batches-table').innerHTML = rows.map(r=>`
+    <tr>
+      <td><strong>${r.batch_reference}</strong></td>
+      <td>${r.scheduled_date}</td>
+      <td>${r.invoice_count}</td>
+      <td class="amount">${fmtMoney(r.total_scheduled)}</td>
+      <td>${r.created_by}</td>
+    </tr>`).join('');
+}
+
+async function submitBatch(){
+  const ref = document.getElementById('b-ref').value.trim();
+  const sdate = document.getElementById('b-date').value;
+  const by = document.getElementById('b-by').value.trim();
+  if(!ref||!sdate||!by){toast('Fill all required fields','error');return;}
+  const r = await api('/api/batches','POST',{
+    batch_reference:ref, scheduled_date:sdate,
+    notes:document.getElementById('b-notes').value,
+    created_by:by,
+  });
+  if(r.ok){toast('Batch created');closeModal('modal-batch');loadBatches();}
+  else toast(r.error,'error');
+}
+
+async function openAddBatch(invoiceId, outstanding, invNo){
+  currentAddBatchInvoice = invoiceId;
+  document.getElementById('addbatch-sub').textContent = `Invoice: ${invNo} — Outstanding: ${fmtMoney(outstanding)}`;
+  document.getElementById('addbatch-amount').value = outstanding;
+  const batches = await api('/api/batches');
+  document.getElementById('addbatch-bid').innerHTML = batches.map(b=>
+    `<option value="${b.batch_id}">${b.batch_reference} (${b.scheduled_date})</option>`
+  ).join('') || '<option disabled>No batches — create one first</option>';
+  openModal('modal-add-batch');
+}
+
+async function submitAddBatch(){
+  const bid = document.getElementById('addbatch-bid').value;
+  const amount = parseFloat(document.getElementById('addbatch-amount').value);
+  const by = document.getElementById('addbatch-by').value.trim();
+  if(!bid||!amount||!by){toast('Fill all required fields','error');return;}
+  const r = await api(`/api/batches/${bid}/items`,'POST',{
+    invoice_id:currentAddBatchInvoice, scheduled_amount:amount, added_by:by
+  });
+  if(r.ok){toast('Invoice scheduled in batch');closeModal('modal-add-batch');loadInvoices();loadBatches();}
+  else toast(r.error,'error');
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────────
+async function loadOutstanding(){
+  const rows = await api('/api/reports/outstanding');
+  const total = rows.reduce((s,r)=>s+r.total_outstanding,0);
+  document.getElementById('outstanding-table').innerHTML = rows.map(r=>`
+    <tr>
+      <td><strong>${r.vendor}</strong></td>
+      <td>${r.category}</td>
+      <td>${r.invoice_count}</td>
+      <td class="amount">${fmtMoney(r.total_outstanding)}</td>
+    </tr>`).join('');
+  document.getElementById('outstanding-footer').innerHTML =
+    `<td colspan="3" style="font-weight:600;padding:12px 16px">Grand Total</td>
+     <td class="amount" style="font-weight:600;padding:12px 16px">${fmtMoney(total)}</td>`;
+}
+
+async function loadAging(){
+  const d = await api('/api/reports/aging');
+  const buckets = ['0-30 days','31-60 days','61-90 days','91+ days'];
+  document.getElementById('aging-table').innerHTML = (d.vendors||[]).map(r=>`
+    <tr>
+      <td><strong>${r.vendor}</strong></td>
+      ${buckets.map(b=>`<td class="amount">${fmtMoney(r[b]||0)}</td>`).join('')}
+      <td class="amount"><strong>${fmtMoney(r.total)}</strong></td>
+    </tr>`).join('');
+  const t = d.totals||{};
+  document.getElementById('aging-footer').innerHTML = `
+    <td style="font-weight:600;padding:11px 16px" class="aging-total-row">Total</td>
+    ${buckets.map(b=>`<td class="amount aging-total-row">${fmtMoney(t[b]||0)}</td>`).join('')}
+    <td class="amount aging-total-row"><strong>${fmtMoney(d.grand_total||0)}</strong></td>`;
+}
+
+async function loadBacklog(){
+  const rows = await api('/api/reports/backlog');
+  document.getElementById('backlog-table').innerHTML = rows.length
+    ? rows.map(r=>`<tr>
+        <td><span class="amount">${r.invoice_number}</span></td>
+        <td>${r.vendor_name}</td>
+        <td>${r.invoice_date}</td>
+        <td class="amount">${fmtMoney(r.total_amount)}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td>${r.cost_centre||'—'}</td>
+        <td><div class="actions">
+          ${r.status==='Draft'?`<button class="btn btn-ghost btn-sm" onclick="openWorkflow('${r.invoice_id}','submit','Submit for Verification')">Submit</button>`:''}
+          ${r.status==='Submitted'?`<button class="btn btn-ghost btn-sm" onclick="openWorkflow('${r.invoice_id}','verify','Verify Invoice')">Verify</button>`:''}
+          ${r.status==='Verified'?`<button class="btn btn-success btn-sm" onclick="openWorkflow('${r.invoice_id}','approve','Approve for Payment')">Approve</button>`:''}
+          ${['Submitted','Verified'].includes(r.status)?`<button class="btn btn-danger btn-sm" onclick="openWorkflow('${r.invoice_id}','reject','Reject Invoice')">Reject</button>`:''}
+        </div></td>
+      </tr>`).join('')
+    : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No invoices pending approval</td></tr>`;
+}
+
+async function loadSchedule(){
+  const rows = await api('/api/reports/schedule');
+  document.getElementById('schedule-table').innerHTML = rows.length
+    ? rows.map(r=>`<tr>
+        <td>${r.batch_reference}</td>
+        <td>${r.scheduled_date}</td>
+        <td>${r.vendor}</td>
+        <td>${r.invoice_number}</td>
+        <td class="amount">${fmtMoney(r.scheduled_amount)}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No scheduled payments</td></tr>`;
+}
+
+// ── AUDIT TRAIL ───────────────────────────────────────────────────────────────
+async function openAudit(id, invNo){
+  const d = await api(`/api/invoices/${id}`);
+  document.getElementById('audit-title').textContent = `Audit: ${invNo}`;
+  document.getElementById('audit-sub').textContent = `${d.vendor_name} — ${fmtMoney(d.total_amount)} — ${d.status}`;
+  const timeline = (d.audit||[]).map((lg,i,arr)=>{
+    const isLast = i===arr.length-1;
+    const dotCls = lg.to_status==='Rejected'?'tl-dot rejected':lg.to_status==='Paid'?'tl-dot paid':'tl-dot';
+    const arrow = lg.from_status ? `${lg.from_status} → ${lg.to_status}` : lg.to_status;
+    return `<div class="tl-item">
+      <div style="position:relative"><div class="${dotCls}"></div>${isLast?'':'<div class="tl-line"></div>'}</div>
+      <div>
+        <div class="tl-action">${lg.action} ${lg.notes?`<span style="color:var(--muted);font-weight:400">— ${lg.notes}</span>`:''}
+        </div>
+        <div class="tl-meta">${arrow} · ${lg.performed_by} · ${lg.performed_at}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('audit-timeline').innerHTML = timeline || '<p style="color:var(--muted)">No log entries.</p>';
+  openModal('modal-audit');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('i-date').value = new Date().toISOString().split('T')[0];
+  populateVendorSelects();
+  loadDashboard();
+  loadRecentInvoices();
+});
+</script>
+</body>
+</html>
