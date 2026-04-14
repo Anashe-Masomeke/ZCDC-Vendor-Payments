@@ -456,39 +456,40 @@ def index():
     return send_from_directory("static", "index.html")
 
 
+# Always initialize DB (needed for gunicorn/Render)
+init_db()
+
+# Seed sample data if empty
+with get_conn() as conn:
+    if not conn.execute("SELECT 1 FROM vendors LIMIT 1").fetchone():
+        from datetime import date, timedelta
+        today = date.today()
+        v1 = new_id(); v2 = new_id(); v3 = new_id()
+        conn.execute("INSERT INTO vendors VALUES (?,?,?,?,?,?,datetime('now'))",
+                     (v1,"ABC Electrical Supplies","Supplies",30,"CABS","1234567"))
+        conn.execute("INSERT INTO vendors VALUES (?,?,?,?,?,?,datetime('now'))",
+                     (v2,"XYZ Maintenance Services","Services",45,"ZB","7654321"))
+        conn.execute("INSERT INTO vendors VALUES (?,?,?,?,?,?,datetime('now'))",
+                     (v3,"Rapid Logistics Ltd","Services",14,"",""))
+
+        def make_inv(inv_no, vid, days_ago, desc, amount, status, cc="Mining-Ops"):
+            iid = new_id()
+            inv_date = (today - timedelta(days=days_ago)).isoformat()
+            outstanding = amount if status != "Paid" else 0
+            if status == "Partially Paid": outstanding = round(amount * 0.4, 2)
+            conn.execute(
+                "INSERT INTO invoices (invoice_id,invoice_number,vendor_id,invoice_date,description,total_amount,outstanding_amount,cost_centre,status,created_by) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (iid,inv_no,vid,inv_date,desc,amount,outstanding,cc,status,"clerk_jane")
+            )
+            conn.execute("INSERT INTO workflow_log VALUES (?,?,?,?,?,?,?,datetime('now'))",
+                         (new_id(),iid,"Created",None,"Draft","clerk_jane",""))
+
+        make_inv("INV-2024-001",v1,98,"Electrical cables",15000,"Approved")
+        make_inv("INV-2024-002",v2,50,"Maintenance contract",8500,"Verified")
+        make_inv("INV-2024-003",v3,10,"Fuel delivery",3200,"Submitted")
+        make_inv("INV-2024-004",v1,70,"Copper wire batch B",22000,"Partially Paid","Plant-Maint")
+        make_inv("INV-2024-005",v2,5,"Office cleaning",1200,"Draft","Admin")
+        make_inv("INV-2024-006",v3,35,"Cold storage logistics",4800,"Approved","Logistics")
+
 if __name__ == "__main__":
-    init_db()
-    # Seed sample data if empty
-    with get_conn() as conn:
-        if not conn.execute("SELECT 1 FROM vendors LIMIT 1").fetchone():
-            from datetime import date, timedelta
-            today = date.today()
-            v1 = new_id(); v2 = new_id(); v3 = new_id()
-            conn.execute("INSERT INTO vendors VALUES (?,?,?,?,?,?,datetime('now'))",
-                         (v1,"ABC Electrical Supplies","Supplies",30,"CABS","1234567"))
-            conn.execute("INSERT INTO vendors VALUES (?,?,?,?,?,?,datetime('now'))",
-                         (v2,"XYZ Maintenance Services","Services",45,"ZB","7654321"))
-            conn.execute("INSERT INTO vendors VALUES (?,?,?,?,?,?,datetime('now'))",
-                         (v3,"Rapid Logistics Ltd","Services",14,"",""))
-
-            def make_inv(inv_no, vid, days_ago, desc, amount, status, cc="Mining-Ops"):
-                iid = new_id()
-                inv_date = (today - timedelta(days=days_ago)).isoformat()
-                outstanding = amount if status not in ("Paid",) else 0
-                if status == "Partially Paid": outstanding = round(amount * 0.4, 2)
-                conn.execute(
-                    "INSERT INTO invoices (invoice_id,invoice_number,vendor_id,invoice_date,description,total_amount,outstanding_amount,cost_centre,status,created_by) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                    (iid,inv_no,vid,inv_date,desc,amount,outstanding,cc,status,"clerk_jane")
-                )
-                conn.execute("INSERT INTO workflow_log VALUES (?,?,?,?,?,?,?,datetime('now'))",
-                             (new_id(),iid,"Created",None,"Draft","clerk_jane",""))
-                return iid
-
-            make_inv("INV-2024-001",v1,98,"Electrical cables and fittings",15000,"Approved")
-            make_inv("INV-2024-002",v2,50,"Monthly maintenance contract",8500,"Verified")
-            make_inv("INV-2024-003",v3,10,"Fuel delivery transport",3200,"Submitted")
-            make_inv("INV-2024-004",v1,70,"Copper wire batch B",22000,"Partially Paid","Plant-Maint")
-            make_inv("INV-2024-005",v2,5,"Office cleaning services",1200,"Draft","Admin")
-            make_inv("INV-2024-006",v3,35,"Cold storage logistics",4800,"Approved","Logistics")
-
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)
