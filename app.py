@@ -21,13 +21,15 @@ app = Flask(__name__, static_folder=os.path.join(BASE_DIR, "static"))
 app.secret_key = "zcdc_secret_2024"
 DB_PATH = os.path.join(BASE_DIR, "zcdc_vendor_payments.db")
 
-USERS = {
+BUILTIN_USERS = {
     "finance_manager_alice": {"password":"admin123",    "role":"Finance Manager",  "initials":"FA"},
     "fin_officer_tom":       {"password":"officer123",  "role":"Finance Officer",  "initials":"FT"},
     "clerk_jane":            {"password":"clerk123",    "role":"Clerk",            "initials":"CJ"},
     "clerk_bob":             {"password":"clerk123",    "role":"Clerk",            "initials":"CB"},
     "treasury_officer_sue":  {"password":"treasury123", "role":"Treasury Officer", "initials":"TS"},
 }
+
+VALID_ROLES = ["Finance Manager", "Finance Officer", "Clerk", "Treasury Officer"]
 
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
@@ -38,6 +40,13 @@ def get_conn():
 def init_db():
     with get_conn() as conn:
         conn.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            username    TEXT PRIMARY KEY,
+            password    TEXT NOT NULL,
+            role        TEXT NOT NULL,
+            initials    TEXT NOT NULL,
+            created_at  TEXT DEFAULT (datetime('now'))
+        );
         CREATE TABLE IF NOT EXISTS vendors (
             vendor_id       TEXT PRIMARY KEY,
             name            TEXT NOT NULL UNIQUE,
@@ -132,27 +141,62 @@ def month_label(d):
 def rows_to_list(rows): return [dict(r) for r in rows]
 
 # ── AUTH ──────────────────────────────────────────────────────────────────────
+def lookup_user(username):
+    """Check DB first, then fall back to built-in users."""
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+        if row:
+            return {"password": row["password"], "role": row["role"], "initials": row["initials"]}
+    return BUILTIN_USERS.get(username)
+
+@app.route("/api/register", methods=["POST"])
+def register():
+    d = request.json
+    username = (d.get("username") or "").strip()
+    password = (d.get("password") or "").strip()
+    role     = (d.get("role") or "").strip()
+    if not username or not password or not role:
+        return jsonify({"error": "Username, password and role are required"}), 400
+    if role not in VALID_ROLES:
+        return jsonify({"error": "Invalid role"}), 400
+    if len(username) < 3:
+        return jsonify({"error": "Username must be at least 3 characters"}), 400
+    if len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+    if lookup_user(username):
+        return jsonify({"error": "Username already taken"}), 409
+    initials = "".join(w[0].upper() for w in username.split("_")[:2])
+    with get_conn() as conn:
+        conn.execute("INSERT INTO users (username,password,role,initials) VALUES (?,?,?,?)",
+                     (username, password, role, initials))
+    return jsonify({"ok": True, "username": username, "role": role, "initials": initials})
+
 @app.route("/api/login", methods=["POST"])
 def login():
     d = request.json
-    u = USERS.get(d.get("username","").strip())
-    if u and u["password"] == d.get("password","").strip():
-        session["username"] = d["username"]
-        session["role"] = u["role"]
+    username = (d.get("username") or "").strip()
+    u = lookup_user(username)
+    if u and u["password"] == (d.get("password") or "").strip():
+        session["username"] = username
+        session["role"]     = u["role"]
         session["initials"] = u["initials"]
-        return jsonify({"ok":True,"username":d["username"],"role":u["role"],"initials":u["initials"]})
-    return jsonify({"error":"Invalid username or password"}), 401
+        return jsonify({"ok": True, "username": username, "role": u["role"], "initials": u["initials"]})
+    return jsonify({"error": "Invalid username or password"}), 401
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
     session.clear()
-    return jsonify({"ok":True})
+    return jsonify({"ok": True})
 
 @app.route("/api/me")
 def me():
     if "username" in session:
-        return jsonify({"username":session["username"],"role":session["role"],"initials":session["initials"]})
-    return jsonify({"error":"Not logged in"}), 401
+        return jsonify({"username": session["username"], "role": session["role"], "initials": session["initials"]})
+    return jsonify({"error": "Not logged in"}), 401
+
+@app.route("/api/roles")
+def get_roles():
+    return jsonify(VALID_ROLES)
 
 # ── VENDORS ───────────────────────────────────────────────────────────────────
 @app.route("/api/vendors", methods=["GET"])
@@ -313,16 +357,31 @@ def list_batches():
 def create_batch():
     d = request.json
     bid = new_id()
+    created_by = d.get("created_by", session.get("username","system"))
+    items = d.get("items", [])  # [{invoice_id, scheduled_amount}, ...]
     try:
         with get_conn() as conn:
             conn.execute(
                 "INSERT INTO payment_batches (batch_id,batch_reference,scheduled_date,notes,created_by) VALUES (?,?,?,?,?)",
-                (bid,d["batch_reference"],d["scheduled_date"],d.get("notes",""),
-                 d.get("created_by",session.get("username","system")))
+                (bid, d["batch_reference"], d["scheduled_date"], d.get("notes",""), created_by)
             )
-        return jsonify({"ok":True,"batch_id":bid}), 201
+            for item in items:
+                iid = item["invoice_id"]
+                amount = float(item["scheduled_amount"])
+                inv = conn.execute("SELECT * FROM invoices WHERE invoice_id=?", (iid,)).fetchone()
+                if not inv:
+                    return jsonify({"error": f"Invoice {iid} not found"}), 404
+                if inv["status"] != "Approved":
+                    return jsonify({"error": f"Invoice {inv['invoice_number']} must be Approved (current: {inv['status']})"}), 400
+                if amount > inv["outstanding_amount"]:
+                    return jsonify({"error": f"Amount for {inv['invoice_number']} exceeds outstanding balance"}), 400
+                conn.execute("INSERT INTO batch_items (item_id,batch_id,invoice_id,scheduled_amount) VALUES (?,?,?,?)",
+                             (new_id(), bid, iid, amount))
+                conn.execute("UPDATE invoices SET status='Scheduled' WHERE invoice_id=?", (iid,))
+                log_action(conn, iid, "Scheduled", "Approved", "Scheduled", created_by, f"Batch {d['batch_reference']}")
+        return jsonify({"ok": True, "batch_id": bid}), 201
     except sqlite3.IntegrityError as e:
-        return jsonify({"error":str(e)}), 400
+        return jsonify({"error": str(e)}), 400
 
 @app.route("/api/batches/<bid>/items", methods=["GET"])
 def get_batch_items(bid):
