@@ -184,15 +184,43 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div class="login-logo">
       <div class="mark">ZCDC</div>
       <h1>Vendor Payments System</h1>
-      <p>Sign in to continue</p>
+      <p>Sign in or create a new account</p>
     </div>
-    <div class="field"><label>Username</label><input id="login-user" placeholder="e.g. clerk_jane" autocomplete="username"></div>
-    <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="Password" autocomplete="current-password"></div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">Sign In</button>
-    <div style="margin-top:14px;font-size:11px;color:var(--muted);text-align:center">
-      Demo users: <strong style="color:var(--text)">clerk_jane</strong> / clerk123 &nbsp;|&nbsp; <strong style="color:var(--text)">finance_manager_alice</strong> / admin123
+    <!-- tabs -->
+    <div style="display:flex;gap:0;margin-bottom:22px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      <button id="tab-signin" onclick="switchAuthTab('signin')" style="flex:1;padding:8px;background:var(--accent);color:#fff;border:none;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer">Sign In</button>
+      <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:8px;background:transparent;color:var(--muted);border:none;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer">Create Account</button>
     </div>
+
+    <!-- sign-in form -->
+    <div id="form-signin">
+      <div class="field"><label>Username</label><input id="login-user" placeholder="e.g. clerk_jane" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="Password" autocomplete="current-password"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">Sign In</button>
+      <div style="margin-top:14px;font-size:11px;color:var(--muted);text-align:center">
+        Demo: <strong style="color:var(--text)">clerk_jane</strong> / clerk123 &nbsp;|&nbsp; <strong style="color:var(--text)">finance_manager_alice</strong> / admin123
+      </div>
+    </div>
+
+    <!-- register form -->
+    <div id="form-register" style="display:none">
+      <div class="field"><label>Username *</label><input id="reg-user" placeholder="e.g. john_doe"></div>
+      <div class="field"><label>Password * (min 6 chars)</label><input id="reg-pass" type="password" placeholder="Password"></div>
+      <div class="field"><label>Confirm Password *</label><input id="reg-pass2" type="password" placeholder="Confirm password"></div>
+      <div class="field"><label>Role *</label>
+        <select id="reg-role">
+          <option value="">Select role…</option>
+          <option>Clerk</option>
+          <option>Finance Officer</option>
+          <option>Treasury Officer</option>
+          <option>Finance Manager</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doRegister()">Create Account</button>
+    </div>
+
     <div id="login-error" style="color:var(--danger);font-size:12px;margin-top:10px;text-align:center;display:none"></div>
+    <div id="login-success" style="color:var(--success);font-size:12px;margin-top:10px;text-align:center;display:none"></div>
   </div>
 </div>
 
@@ -300,7 +328,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <!-- BATCHES -->
       <section id="sec-batches" class="section">
         <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
-          <button class="btn btn-primary" onclick="openModal('modal-batch')">+ New Batch</button>
+          <button class="btn btn-primary" onclick="openCreateBatch()">+ New Batch</button>
         </div>
         <div class="table-wrap">
           <div class="table-header"><span class="table-title">Payment Batches</span></div>
@@ -516,13 +544,28 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 <!-- New Batch -->
 <div class="overlay" id="modal-batch">
-  <div class="modal">
+  <div class="modal modal-lg">
     <div class="modal-title">Create Payment Batch</div>
     <div class="modal-sub">A batch can include many vendors and invoices</div>
-    <div class="field"><label>Batch Reference *</label><input id="b-ref" placeholder="BATCH-APR-W1"></div>
-    <div class="field"><label>Scheduled Date *</label><input id="b-date" type="date"></div>
-    <div class="field"><label>Notes</label><input id="b-notes" placeholder="e.g. Weekly payrun April"></div>
-    <div class="field"><label>Created By *</label><input id="b-by"></div>
+    <div class="field-row">
+      <div class="field"><label>Batch Reference *</label><input id="b-ref" placeholder="BATCH-APR-W1"></div>
+      <div class="field"><label>Scheduled Date *</label><input id="b-date" type="date"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Notes</label><input id="b-notes" placeholder="e.g. Weekly payrun April"></div>
+      <div class="field"><label>Created By *</label><input id="b-by"></div>
+    </div>
+
+    <!-- Inline invoice lines -->
+    <div style="margin-top:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Invoice Lines (optional — add invoices to batch now)</span>
+        <button class="btn btn-ghost btn-sm" onclick="addBatchLine()">+ Add Line</button>
+      </div>
+      <div id="batch-lines-wrap" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div id="batch-lines-total" style="text-align:right;font-size:12px;font-family:var(--mono);color:var(--accent);margin-top:6px"></div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-batch')">Cancel</button>
       <button class="btn btn-primary" onclick="submitBatch()">Create Batch</button>
@@ -584,29 +627,67 @@ let currentPayOutstanding = 0;
 let currentAddBatchInvoice = null;
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  const isSignin = tab === 'signin';
+  document.getElementById('form-signin').style.display = isSignin ? '' : 'none';
+  document.getElementById('form-register').style.display = isSignin ? 'none' : '';
+  document.getElementById('tab-signin').style.background = isSignin ? 'var(--accent)' : 'transparent';
+  document.getElementById('tab-signin').style.color = isSignin ? '#fff' : 'var(--muted)';
+  document.getElementById('tab-register').style.background = isSignin ? 'transparent' : 'var(--accent)';
+  document.getElementById('tab-register').style.color = isSignin ? 'var(--muted)' : '#fff';
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-success').style.display = 'none';
+}
+
+function setCurrentUser(r) {
+  currentUser = r;
+  document.getElementById('user-initials').textContent = r.initials;
+  document.getElementById('user-name').textContent = r.username;
+  document.getElementById('user-role').textContent = r.role;
+  document.getElementById('i-by').value = r.username;
+  document.getElementById('wf-by').value = r.username;
+  document.getElementById('pay-by').value = r.username;
+  document.getElementById('addbatch-by').value = r.username;
+  document.getElementById('b-by').value = r.username;
+}
+
 async function doLogin() {
   const username = document.getElementById('login-user').value.trim();
   const password = document.getElementById('login-pass').value.trim();
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
   const r = await api('/api/login','POST',{username,password});
   if(r.ok) {
-    currentUser = r;
-    document.getElementById('user-initials').textContent = r.initials;
-    document.getElementById('user-name').textContent = r.username;
-    document.getElementById('user-role').textContent = r.role;
-    document.getElementById('i-by').value = r.username;
-    document.getElementById('wf-by').value = r.username;
-    document.getElementById('pay-by').value = r.username;
-    document.getElementById('addbatch-by').value = r.username;
-    document.getElementById('b-by').value = r.username;
+    setCurrentUser(r);
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     populateMonthFilters();
     showSection('dashboard');
   } else {
-    const el = document.getElementById('login-error');
-    el.textContent = r.error; el.style.display = 'block';
+    errEl.textContent = r.error; errEl.style.display = 'block';
   }
 }
+
+async function doRegister() {
+  const username = document.getElementById('reg-user').value.trim();
+  const password = document.getElementById('reg-pass').value.trim();
+  const password2 = document.getElementById('reg-pass2').value.trim();
+  const role = document.getElementById('reg-role').value;
+  const errEl = document.getElementById('login-error');
+  const okEl  = document.getElementById('login-success');
+  errEl.style.display = 'none'; okEl.style.display = 'none';
+  if(password !== password2) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
+  const r = await api('/api/register','POST',{username,password,role});
+  if(r.ok) {
+    okEl.textContent = `Account created! You can now sign in as "${r.username}".`;
+    okEl.style.display = 'block';
+    setTimeout(() => switchAuthTab('signin'), 2000);
+    document.getElementById('login-user').value = username;
+  } else {
+    errEl.textContent = r.error; errEl.style.display = 'block';
+  }
+}
+
 document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
 async function doLogout() {
@@ -908,6 +989,90 @@ async function submitPayment() {
 }
 
 // ── BATCHES ───────────────────────────────────────────────────────────────────
+let batchLineInvoices = []; // populated when modal opens
+
+async function openCreateBatch() {
+  // load approved invoices for the line selector
+  const allInv = await api('/api/invoices');
+  batchLineInvoices = allInv.filter(i => ['Approved'].includes(i.status));
+  document.getElementById('batch-lines-wrap').innerHTML = '';
+  document.getElementById('batch-lines-total').textContent = '';
+  document.getElementById('b-ref').value = '';
+  document.getElementById('b-date').value = '';
+  document.getElementById('b-notes').value = '';
+  openModal('modal-batch');
+}
+
+function addBatchLine() {
+  const wrap = document.getElementById('batch-lines-wrap');
+  const idx = wrap.children.length;
+  const opts = batchLineInvoices.length
+    ? batchLineInvoices.map(i => `<option value="${i.invoice_id}" data-out="${i.outstanding_amount}">${i.invoice_number} — ${i.vendor_name} (${fmtMoney(i.outstanding_amount)})</option>`).join('')
+    : '<option disabled>No approved invoices available</option>';
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px';
+  row.innerHTML = `
+    <select class="bl-inv" onchange="onBatchLineInvChange(this)" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:12px;font-family:var(--font);outline:none">${opts}</select>
+    <input class="bl-amt" type="number" step="0.01" placeholder="Amount" oninput="updateBatchTotal()"
+      style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:12px;font-family:var(--mono);width:120px;outline:none">
+    <button onclick="this.parentElement.remove();updateBatchTotal()" style="background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
+  `;
+  wrap.appendChild(row);
+  // pre-fill amount from first invoice
+  const sel = row.querySelector('.bl-inv');
+  const amtInput = row.querySelector('.bl-amt');
+  if(sel.options.length && !sel.options[0].disabled) {
+    amtInput.value = sel.options[0].dataset.out || '';
+  }
+  updateBatchTotal();
+}
+
+function onBatchLineInvChange(sel) {
+  const amt = sel.closest('div').querySelector('.bl-amt');
+  const opt = sel.options[sel.selectedIndex];
+  if(opt && opt.dataset.out) amt.value = opt.dataset.out;
+  updateBatchTotal();
+}
+
+function updateBatchTotal() {
+  const rows = document.querySelectorAll('#batch-lines-wrap > div');
+  let total = 0;
+  rows.forEach(r => { const v = parseFloat(r.querySelector('.bl-amt').value); if(!isNaN(v)) total += v; });
+  document.getElementById('batch-lines-total').textContent = rows.length ? `Batch Total: ${fmtMoney(total)}` : '';
+}
+
+async function submitBatch() {
+  const ref   = document.getElementById('b-ref').value.trim();
+  const sdate = document.getElementById('b-date').value;
+  const by    = document.getElementById('b-by').value.trim();
+  if(!ref||!sdate||!by){toast('Fill all required fields','error');return;}
+
+  // collect lines
+  const lines = [];
+  let lineErr = false;
+  document.querySelectorAll('#batch-lines-wrap > div').forEach(row => {
+    const invSel = row.querySelector('.bl-inv');
+    const amtInp = row.querySelector('.bl-amt');
+    const inv_id = invSel.value;
+    const amount = parseFloat(amtInp.value);
+    if(!inv_id || isNaN(amount) || amount <= 0) { lineErr = true; return; }
+    lines.push({ invoice_id: inv_id, scheduled_amount: amount });
+  });
+  if(lineErr){toast('Each invoice line needs a valid amount','error');return;}
+
+  const r = await api('/api/batches','POST',{
+    batch_reference: ref, scheduled_date: sdate,
+    notes: document.getElementById('b-notes').value,
+    created_by: by,
+    items: lines
+  });
+  if(r.ok){
+    toast(`Batch created${lines.length ? ` with ${lines.length} invoice(s)`:''}`);
+    closeModal('modal-batch');
+    loadBatches();
+  } else toast(r.error,'error');
+}
+
 async function loadBatches() {
   const rows = await api('/api/batches');
   document.getElementById('batches-table').innerHTML = rows.length ? rows.map(r=>`
@@ -936,16 +1101,6 @@ async function viewBatchItems(bid,bref) {
       <td>${statusBadge(i.status)}</td>
     </tr>`).join('') : `<tr><td colspan="6" class="empty">No items</td></tr>`;
   openModal('modal-batch-items');
-}
-
-async function submitBatch() {
-  const ref=document.getElementById('b-ref').value.trim();
-  const sdate=document.getElementById('b-date').value;
-  const by=document.getElementById('b-by').value.trim();
-  if(!ref||!sdate||!by){toast('Fill all required fields','error');return;}
-  const r = await api('/api/batches','POST',{batch_reference:ref,scheduled_date:sdate,notes:document.getElementById('b-notes').value,created_by:by});
-  if(r.ok){toast('Batch created');closeModal('modal-batch');loadBatches();}
-  else toast(r.error,'error');
 }
 
 async function openAddBatch(invoiceId,outstanding,invNo) {
@@ -1091,15 +1246,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
   // Check if already logged in
   api('/api/me').then(r=>{
     if(r.username){
-      currentUser=r;
-      document.getElementById('user-initials').textContent=r.initials;
-      document.getElementById('user-name').textContent=r.username;
-      document.getElementById('user-role').textContent=r.role;
-      document.getElementById('i-by').value=r.username;
-      document.getElementById('wf-by').value=r.username;
-      document.getElementById('pay-by').value=r.username;
-      document.getElementById('addbatch-by').value=r.username;
-      document.getElementById('b-by').value=r.username;
+      setCurrentUser(r);
       document.getElementById('login-page').style.display='none';
       document.getElementById('app').style.display='flex';
       populateMonthFilters();
