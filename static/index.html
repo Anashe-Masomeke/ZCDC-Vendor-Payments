@@ -3,275 +3,309 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZCDC – Vendor Payments System</title>
+<title>ZCDC – Vendor Payables Intelligence System</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0f1117;--surface:#181c26;--card:#1e2333;--border:#2a3045;
-  --accent:#4f8ef7;--accent2:#22d3a5;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--purple:#a78bfa;
-  --text:#e8ecf4;--muted:#7a8499;--faint:#2a3045;
+  --bg:#0b0e17;--surface:#121620;--card:#171c2a;--card2:#1c2232;--border:#242d42;
+  --accent:#4f8ef7;--accent2:#22d3a5;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--purple:#a78bfa;--orange:#fb923c;
+  --text:#e8ecf4;--muted:#6b7a99;--faint:#1e2538;
   --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --risk-low:#22c55e;--risk-medium:#f59e0b;--risk-high:#ef4444;--risk-critical:#dc2626;
 }
+*{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6;min-height:100vh}
 
 /* LOGIN */
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
-.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:400px}
-.login-logo{text-align:center;margin-bottom:28px}
-.login-logo .mark{font-size:12px;font-weight:600;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}
-.login-logo h1{font-size:20px;font-weight:600;margin-top:4px}
-.login-logo p{font-size:13px;color:var(--muted);margin-top:4px}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:44px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-mark{font-size:11px;font-weight:600;letter-spacing:.16em;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+.login-title{font-size:22px;font-weight:600}
+.login-sub{font-size:13px;color:var(--muted);margin-top:4px}
+.login-users{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:11px;color:var(--muted);line-height:1.9}
+.login-users strong{color:var(--text)}
 
-/* APP SHELL */
+/* SHELL */
 .app{display:flex;min-height:100vh;display:none}
-aside{width:228px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
-.logo{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
-.logo-mark{font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;margin-bottom:3px}
-.logo-name{font-size:14px;font-weight:600}
-.logo-sub{font-size:11px;color:var(--muted);margin-top:2px}
+aside{width:234px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:22px 18px 16px;border-bottom:1px solid var(--border)}
+.logo-mark{font-size:9px;font-weight:600;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+.logo-name{font-size:14px;font-weight:600;margin-top:2px}
+.logo-sub{font-size:10px;color:var(--muted);margin-top:1px}
 nav{padding:10px 0;flex:1;overflow-y:auto}
-.nav-section{padding:14px 16px 5px;font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
-.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;color:var(--muted);cursor:pointer;transition:all .15s;font-size:13px;border-left:3px solid transparent}
-.nav-item:hover{color:var(--text);background:var(--card)}
-.nav-item.active{color:var(--accent);background:rgba(79,142,247,.08);border-left-color:var(--accent)}
-.nav-logout{margin:12px 12px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;width:calc(100% - 24px);text-align:left;font-family:var(--font)}
-.nav-logout:hover{color:var(--danger);border-color:rgba(239,68,68,.3)}
+.nav-section{padding:16px 16px 4px;font-size:9px;font-weight:600;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;color:var(--muted);cursor:pointer;transition:all .15s;font-size:12px;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--accent);background:rgba(79,142,247,.07);border-left-color:var(--accent)}
+.nav-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:rgba(239,68,68,.2);color:var(--danger);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:600}
+.nav-logout{margin:10px 12px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:11px;width:calc(100% - 24px);text-align:left;font-family:var(--font)}
+.nav-logout:hover{color:var(--danger);border-color:rgba(239,68,68,.25)}
 main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.topbar{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0}
-.topbar-title{font-size:15px;font-weight:600}
-.topbar-sub{font-size:12px;color:var(--muted)}
-.user-pill{display:flex;align-items:center;gap:8px;font-size:12px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:5px 12px 5px 5px}
-.avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0}
+.topbar{padding:13px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0}
+.topbar-left .page-title{font-size:15px;font-weight:600}
+.topbar-left .page-sub{font-size:11px;color:var(--muted)}
+.user-pill{display:flex;align-items:center;gap:8px;font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px 12px 4px 4px}
+.avatar{width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
 .user-name{color:var(--text);font-weight:500}
 .user-role{color:var(--muted)}
-.content{flex:1;overflow-y:auto;padding:24px}
-.section{display:none}
-.section.active{display:block}
+.content{flex:1;overflow-y:auto;padding:22px}
+.section{display:none}.section.active{display:block}
 
-/* STAT CARDS */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
-.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
-.stat-value{font-size:22px;font-weight:600;font-family:var(--mono)}
-.stat-card.accent .stat-value{color:var(--accent)}
-.stat-card.warn .stat-value{color:var(--warn)}
-.stat-card.danger .stat-value{color:var(--danger)}
-.stat-card.success .stat-value{color:var(--success)}
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-color,var(--border))}
+.kpi.accent{--kpi-color:var(--accent)}.kpi.warn{--kpi-color:var(--warn)}.kpi.danger{--kpi-color:var(--danger)}.kpi.success{--kpi-color:var(--success)}.kpi.purple{--kpi-color:var(--purple)}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.kpi-value{font-size:21px;font-weight:600;font-family:var(--mono);color:var(--kpi-color,var(--text))}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
 
-/* VENDOR ACCOUNT CARDS on dashboard */
-.vendor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:24px}
-.vendor-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
-.vendor-card-name{font-weight:600;font-size:13px;margin-bottom:6px;color:var(--text)}
-.vendor-card-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
-.vendor-card-row .lbl{color:var(--muted)}
-.vendor-card-row .val{font-family:var(--mono);color:var(--text)}
-.vendor-card-outstanding{font-size:16px;font-weight:600;font-family:var(--mono);color:var(--accent);margin-top:8px}
+/* CHARTS */
+.chart-grid{display:grid;gap:14px;margin-bottom:20px}
+.chart-grid-2{grid-template-columns:1fr 1fr}
+.chart-grid-3{grid-template-columns:2fr 1fr}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.chart-title{font-size:12px;font-weight:600;margin-bottom:4px;color:var(--text)}
+.chart-sub{font-size:11px;color:var(--muted);margin-bottom:14px}
+.chart-wrap{position:relative}
+
+/* RISK */
+.risk-score-circle{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;border:2px solid;font-weight:700;font-size:14px;font-family:var(--mono);flex-shrink:0}
+.risk-low{border-color:var(--risk-low);color:var(--risk-low);background:rgba(34,197,94,.07)}
+.risk-medium{border-color:var(--risk-medium);color:var(--risk-medium);background:rgba(245,158,11,.07)}
+.risk-high{border-color:var(--risk-high);color:var(--risk-high);background:rgba(239,68,68,.07)}
+.risk-critical{border-color:var(--risk-critical);color:var(--risk-critical);background:rgba(220,38,38,.12)}
+.risk-bar-wrap{flex:1;min-width:0}
+.risk-bar-bg{height:6px;background:var(--faint);border-radius:3px;margin-top:6px;overflow:hidden}
+.risk-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.risk-vendor-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--faint)}
+.risk-vendor-row:last-child{border-bottom:none}
+.risk-vendor-name{font-weight:500;font-size:13px}
+.risk-vendor-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.alert-banner{border-radius:10px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px;font-size:12px}
+.alert-critical{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.25);color:#fca5a5}
+.alert-high{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#fca5a5}
+.alert-medium{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#fde68a}
+.alert-icon{font-size:16px;flex-shrink:0}
+
+/* PROJECTION */
+.proj-week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:14px}
+.proj-week{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.proj-week-label{font-size:10px;color:var(--muted);margin-bottom:4px}
+.proj-week-total{font-size:14px;font-weight:600;font-family:var(--mono);color:var(--accent)}
+.proj-week-sched{font-size:10px;color:var(--accent2)}
+.proj-week-proj{font-size:10px;color:var(--warn)}
+.proj-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.proj-summary-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.proj-summary-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.proj-summary-value{font-size:18px;font-weight:600;font-family:var(--mono)}
 
 /* TABLES */
-.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:18px}
-.table-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.table-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .table-title{font-weight:600;font-size:13px;flex-shrink:0}
-table{width:100%;border-collapse:collapse;min-width:600px}
 .table-scroll{overflow-x:auto}
-th{text-align:left;padding:9px 14px;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface);white-space:nowrap}
-td{padding:10px 14px;border-bottom:1px solid var(--faint);font-size:12px;vertical-align:middle}
+table{width:100%;border-collapse:collapse;min-width:500px}
+th{text-align:left;padding:9px 14px;font-size:9px;font-weight:600;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface);white-space:nowrap}
+td{padding:9px 14px;border-bottom:1px solid var(--faint);font-size:12px;vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.02)}
+tr:hover td{background:rgba(255,255,255,.015)}
 
 /* BADGES */
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
-.badge-draft{background:rgba(122,132,153,.15);color:var(--muted)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;letter-spacing:.02em}
+.badge-draft{background:rgba(107,122,153,.15);color:var(--muted)}
 .badge-submitted{background:rgba(245,158,11,.12);color:var(--warn)}
 .badge-verified{background:rgba(79,142,247,.12);color:var(--accent)}
 .badge-approved{background:rgba(34,211,165,.12);color:var(--accent2)}
 .badge-rejected{background:rgba(239,68,68,.12);color:var(--danger)}
-.badge-scheduled{background:rgba(167,139,250,.15);color:var(--purple)}
-.badge-partial{background:rgba(245,158,11,.15);color:var(--warn)}
+.badge-scheduled{background:rgba(167,139,250,.13);color:var(--purple)}
+.badge-partial{background:rgba(245,158,11,.13);color:var(--warn)}
 .badge-paid{background:rgba(34,197,94,.12);color:var(--success)}
 .badge-0-30{background:rgba(34,197,94,.1);color:var(--success)}
-.badge-31-60{background:rgba(245,158,11,.12);color:var(--warn)}
-.badge-61-90{background:rgba(249,115,22,.12);color:#fb923c}
+.badge-31-60{background:rgba(245,158,11,.1);color:var(--warn)}
+.badge-61-90{background:rgba(251,146,60,.1);color:var(--orange)}
 .badge-91{background:rgba(239,68,68,.12);color:var(--danger)}
 .badge-bank{background:rgba(79,142,247,.1);color:var(--accent)}
 .badge-eco{background:rgba(34,211,165,.1);color:var(--accent2)}
 .badge-cash{background:rgba(167,139,250,.1);color:var(--purple)}
+.badge-risk-low{background:rgba(34,197,94,.12);color:var(--success)}
+.badge-risk-medium{background:rgba(245,158,11,.12);color:var(--warn)}
+.badge-risk-high{background:rgba(239,68,68,.12);color:var(--danger)}
+.badge-risk-critical{background:rgba(220,38,38,.18);color:#fca5a5;border:1px solid rgba(220,38,38,.3)}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:none;font-family:var(--font);white-space:nowrap}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:#3a7ce8}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
-.btn-ghost:hover{color:var(--text);border-color:#3a4155}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#3a7ce8}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
 .btn-danger{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2)}
 .btn-success{background:rgba(34,197,94,.1);color:var(--success);border:1px solid rgba(34,197,94,.2)}
 .btn-sm{padding:4px 9px;font-size:11px;border-radius:5px}
 
-/* FILTERS */
-.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
-.filter-bar select,.filter-bar input{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font);outline:none}
-.filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
-.search-input{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px 12px;color:var(--text);font-size:12px;font-family:var(--font);outline:none;min-width:200px}
-.search-input:focus{border-color:var(--accent)}
-
-/* MODALS */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s}
+/* FORMS & MODALS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s}
 .overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;padding:26px;transform:translateY(10px);transition:transform .2s}
 .overlay.open .modal{transform:translateY(0)}
+.modal-lg{max-width:700px}
 .modal-title{font-size:16px;font-weight:600;margin-bottom:4px}
-.modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
-.modal-footer{margin-top:20px;display:flex;gap:8px;justify-content:flex-end}
-.modal-lg{max-width:680px}
-
-/* FORMS */
-.field{margin-bottom:14px}
-.field label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.modal-footer{margin-top:18px;display:flex;gap:8px;justify-content:flex-end}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:10px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em}
 .field input,.field select,.field textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field input:focus,.field select:focus{border-color:var(--accent)}
 .field select option{background:var(--card)}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font);outline:none}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
+.search-inp{min-width:180px}
 
 /* TIMELINE */
-.timeline{padding:12px 0}
 .tl-item{display:flex;gap:10px;padding:6px 0;position:relative}
 .tl-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0}
 .tl-dot.rejected{background:var(--danger)}.tl-dot.paid{background:var(--success)}
-.tl-line{position:absolute;left:3px;top:18px;bottom:-6px;width:1px;background:var(--border)}
+.tl-line{position:absolute;left:3px;top:17px;bottom:-6px;width:1px;background:var(--border)}
 .tl-item:last-child .tl-line{display:none}
-.tl-action{font-size:12px;font-weight:500;color:var(--text)}
+.tl-action{font-size:12px;font-weight:500}
 .tl-meta{font-size:11px;color:var(--muted)}
 
 /* MONTH GROUP */
-.month-group{margin-bottom:20px}
-.month-heading{font-size:12px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:10px}
+.month-group{margin-bottom:18px}
+.month-heading{font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.09em;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:8px}
 
 /* TOAST */
-.toast-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:2000}
-.toast{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:12px;min-width:200px;animation:slideup .2s ease;display:flex;align-items:center;gap:8px}
+.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:6px;z-index:2000}
+.toast{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 15px;font-size:12px;min-width:200px;animation:slideup .2s;display:flex;align-items:center;gap:8px}
 .toast.success{border-color:rgba(34,197,94,.3);color:var(--success)}
 .toast.error{border-color:rgba(239,68,68,.3);color:var(--danger)}
-@keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideup{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 .amount{font-family:var(--mono);font-size:12px}
-.actions{display:flex;gap:4px;flex-wrap:wrap}
-.section-heading{font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text)}
-.empty{text-align:center;color:var(--muted);padding:28px;font-size:13px}
+.empty{text-align:center;color:var(--muted);padding:28px;font-size:12px}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.section-title{font-size:13px;font-weight:600;margin-bottom:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 
-/* VENDOR DETAIL PANEL */
-.vd-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
-.vd-header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-.vd-avatar{width:44px;height:44px;border-radius:10px;background:rgba(79,142,247,.15);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:var(--accent)}
-.vd-name{font-size:16px;font-weight:600}
-.vd-meta{font-size:12px;color:var(--muted);margin-top:2px}
-.vd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
-.vd-item .dl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.vd-item .dv{font-size:13px;color:var(--text);margin-top:2px;font-family:var(--mono)}
+/* WORKING CAPITAL METRICS */
+.wc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+.wc-metric{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center}
+.wc-value{font-size:26px;font-weight:600;font-family:var(--mono);color:var(--accent2)}
+.wc-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.wc-hint{font-size:10px;color:var(--muted);margin-top:3px;font-style:italic}
 
-/* REJECTION CARD */
-.rejection-card{background:var(--surface);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:12px 14px;margin-bottom:8px}
-.rejection-vendor{font-weight:600;font-size:13px;color:var(--text)}
-.rejection-reason{font-size:12px;color:var(--danger);margin-top:4px}
-.rejection-meta{font-size:11px;color:var(--muted);margin-top:4px}
+/* REJECTION CARDS */
+.rej-card{background:var(--surface);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:12px 14px;margin-bottom:8px}
+.rej-vendor{font-weight:600;font-size:13px}
+.rej-reason{font-size:11px;color:var(--danger);margin-top:3px}
+.rej-meta{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* VENDOR DETAIL */
+.vd-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
+.vd-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.vd-avatar{width:42px;height:42px;border-radius:10px;background:rgba(79,142,247,.12);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--accent)}
+.vd-name{font-size:15px;font-weight:600}
+.vd-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.vd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
+.vd-item .dl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.vd-item .dv{font-size:13px;margin-top:2px;font-family:var(--mono)}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN PAGE -->
 <div class="login-wrap" id="login-page">
   <div class="login-box">
     <div class="login-logo">
-      <div class="mark">ZCDC</div>
-      <h1>Vendor Payments System</h1>
-      <p>Sign in or create a new account</p>
+      <div class="login-mark">ZCDC</div>
+      <div class="login-title">Vendor Payables Intelligence</div>
+      <div class="login-sub">Financial Operations &amp; Risk Control System</div>
     </div>
-    <!-- tabs -->
-    <div style="display:flex;gap:0;margin-bottom:22px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
-      <button id="tab-signin" onclick="switchAuthTab('signin')" style="flex:1;padding:8px;background:var(--accent);color:#fff;border:none;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer">Sign In</button>
-      <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:8px;background:transparent;color:var(--muted);border:none;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer">Create Account</button>
+    <div class="field"><label>Username</label><input id="login-user" placeholder="e.g. finance_manager_alice" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="Password"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px 0" onclick="doLogin()">Sign In →</button>
+    <div id="login-err" style="color:var(--danger);font-size:12px;margin-top:10px;text-align:center;display:none"></div>
+    <div class="login-users">
+      <strong>finance_manager_alice</strong> / admin123 — Finance Manager<br>
+      <strong>fin_officer_tom</strong> / officer123 — Finance Officer<br>
+      <strong>clerk_jane</strong> / clerk123 — Clerk<br>
+      <strong>treasury_officer_sue</strong> / treasury123 — Treasury
     </div>
-
-    <!-- sign-in form -->
-    <div id="form-signin">
-      <div class="field"><label>Username</label><input id="login-user" placeholder="e.g. clerk_jane" autocomplete="username"></div>
-      <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="Password" autocomplete="current-password"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">Sign In</button>
-      <div style="margin-top:14px;font-size:11px;color:var(--muted);text-align:center">
-        Demo: <strong style="color:var(--text)">clerk_jane</strong> / clerk123 &nbsp;|&nbsp; <strong style="color:var(--text)">finance_manager_alice</strong> / admin123
-      </div>
-    </div>
-
-    <!-- register form -->
-    <div id="form-register" style="display:none">
-      <div class="field"><label>Username *</label><input id="reg-user" placeholder="e.g. john_doe"></div>
-      <div class="field"><label>Password * (min 6 chars)</label><input id="reg-pass" type="password" placeholder="Password"></div>
-      <div class="field"><label>Confirm Password *</label><input id="reg-pass2" type="password" placeholder="Confirm password"></div>
-      <div class="field"><label>Role *</label>
-        <select id="reg-role">
-          <option value="">Select role…</option>
-          <option>Clerk</option>
-          <option>Finance Officer</option>
-          <option>Treasury Officer</option>
-          <option>Finance Manager</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doRegister()">Create Account</button>
-    </div>
-
-    <div id="login-error" style="color:var(--danger);font-size:12px;margin-top:10px;text-align:center;display:none"></div>
-    <div id="login-success" style="color:var(--success);font-size:12px;margin-top:10px;text-align:center;display:none"></div>
   </div>
 </div>
 
-<!-- APP -->
+<!-- APP SHELL -->
 <div class="app" id="app">
   <aside>
     <div class="logo">
       <div class="logo-mark">ZCDC</div>
-      <div class="logo-name">Vendor Payments</div>
-      <div class="logo-sub">Tracking System</div>
+      <div class="logo-name">Payables Intelligence</div>
+      <div class="logo-sub">Financial Operations System</div>
     </div>
     <nav>
-      <div class="nav-section">Main</div>
-      <div class="nav-item active" onclick="showSection('dashboard',this)">▦ Dashboard</div>
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">▦</span>Dashboard</div>
+
+      <div class="nav-section">Analytics</div>
+      <div class="nav-item" onclick="nav('risk',this)"><span class="nav-icon">⚠</span>Vendor Risk</div>
+      <div class="nav-item" onclick="nav('cashflow',this)"><span class="nav-icon">◈</span>Cash Projection</div>
+      <div class="nav-item" onclick="nav('wc',this)"><span class="nav-icon">◉</span>Working Capital</div>
+      <div class="nav-item" onclick="nav('performance',this)"><span class="nav-icon">◆</span>Pay Performance</div>
+
       <div class="nav-section">Records</div>
-      <div class="nav-item" onclick="showSection('vendors',this)">◈ Vendors</div>
-      <div class="nav-item" onclick="showSection('invoices',this)">◉ Invoices</div>
-      <div class="nav-item" onclick="showSection('batches',this)">◐ Payment Batches</div>
+      <div class="nav-item" onclick="nav('vendors',this)"><span class="nav-icon">◈</span>Vendors</div>
+      <div class="nav-item" onclick="nav('invoices',this)"><span class="nav-icon">◉</span>Invoices</div>
+      <div class="nav-item" onclick="nav('batches',this)"><span class="nav-icon">◐</span>Payment Batches</div>
+
       <div class="nav-section">Reports</div>
-      <div class="nav-item" onclick="showSection('outstanding',this)">◆ Outstanding</div>
-      <div class="nav-item" onclick="showSection('aging',this)">◇ Aging Analysis</div>
-      <div class="nav-item" onclick="showSection('backlog',this)">▷ Approval Backlog</div>
-      <div class="nav-item" onclick="showSection('rejections',this)">✕ Rejections</div>
-      <div class="nav-item" onclick="showSection('schedule',this)">▸ Pay Schedule</div>
-      <div class="nav-item" onclick="showSection('monthly',this)">≡ Monthly Summary</div>
+      <div class="nav-item" onclick="nav('outstanding',this)"><span class="nav-icon">▸</span>Outstanding</div>
+      <div class="nav-item" onclick="nav('aging',this)"><span class="nav-icon">◇</span>Aging Analysis</div>
+      <div class="nav-item" onclick="nav('backlog',this)"><span class="nav-icon">▷</span>Approval Backlog</div>
+      <div class="nav-item" onclick="nav('rejections',this)"><span class="nav-icon">✕</span>Rejections</div>
+      <div class="nav-item" onclick="nav('schedule',this)"><span class="nav-icon">▸</span>Pay Schedule</div>
+      <div class="nav-item" onclick="nav('monthly',this)"><span class="nav-icon">≡</span>Monthly Summary</div>
     </nav>
     <button class="nav-logout" onclick="doLogout()">⏻ Sign Out</button>
   </aside>
 
   <main>
     <div class="topbar">
-      <div>
-        <div class="topbar-title" id="page-title">Dashboard</div>
-        <div class="topbar-sub" id="page-sub">Overview of vendor payables</div>
+      <div class="topbar-left">
+        <div class="page-title" id="page-title">Dashboard</div>
+        <div class="page-sub" id="page-sub">Financial operations overview</div>
       </div>
       <div class="user-pill">
-        <div class="avatar" id="user-initials">FA</div>
-        <div>
-          <div class="user-name" id="user-name">finance_manager_alice</div>
-          <div class="user-role" id="user-role">Finance Manager</div>
-        </div>
+        <div class="avatar" id="u-init">FA</div>
+        <div><div class="user-name" id="u-name">—</div><div class="user-role" id="u-role">—</div></div>
       </div>
     </div>
 
     <div class="content">
 
-      <!-- DASHBOARD -->
+      <!-- ══ DASHBOARD ══════════════════════════════════════════════════════ -->
       <section id="sec-dashboard" class="section active">
-        <div class="stat-grid" id="dash-stats"></div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--muted)">TOP VENDORS — ACCOUNT DETAILS &amp; OUTSTANDING</div>
-        <div class="vendor-grid" id="dash-vendors"></div>
+        <div class="kpi-grid" id="dash-kpis"></div>
+        <!-- Risk alerts strip -->
+        <div id="dash-alerts" style="margin-bottom:16px"></div>
+        <!-- Charts row -->
+        <div class="chart-grid chart-grid-3" style="margin-bottom:16px">
+          <div class="chart-card">
+            <div class="chart-title">AP Aging Distribution</div>
+            <div class="chart-sub">Outstanding balance by age bucket</div>
+            <div class="chart-wrap" style="height:200px"><canvas id="chart-aging-bar"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Status Breakdown</div>
+            <div class="chart-sub">Invoice count by status</div>
+            <div class="chart-wrap" style="height:200px"><canvas id="chart-status-pie"></canvas></div>
+          </div>
+        </div>
+        <!-- Recent invoices -->
         <div class="table-wrap">
           <div class="table-header">
             <span class="table-title">Recent Invoices</span>
@@ -283,172 +317,239 @@ tr:hover td{background:rgba(255,255,255,.02)}
         </div>
       </section>
 
-      <!-- VENDORS -->
+      <!-- ══ VENDOR RISK ════════════════════════════════════════════════════ -->
+      <section id="sec-risk" class="section">
+        <div class="kpi-grid" id="risk-kpis"></div>
+        <div id="risk-alerts" style="margin-bottom:14px"></div>
+        <div class="chart-grid chart-grid-2" style="margin-bottom:16px">
+          <div class="chart-card">
+            <div class="chart-title">Risk Score by Vendor</div>
+            <div class="chart-sub">0 = Low risk · 100 = Critical risk</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="chart-risk-bar"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Risk Distribution</div>
+            <div class="chart-sub">Vendors by risk category</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="chart-risk-pie"></canvas></div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header"><span class="table-title">Vendor Risk Scorecard</span></div>
+          <div id="risk-rows"></div>
+        </div>
+      </section>
+
+      <!-- ══ CASH PROJECTION ════════════════════════════════════════════════ -->
+      <section id="sec-cashflow" class="section">
+        <div class="proj-summary" id="proj-summary"></div>
+        <div class="chart-card" style="margin-bottom:16px">
+          <div class="chart-title">13-Week Cash Requirement Forecast</div>
+          <div class="chart-sub">Firm scheduled payments + projected approved payables</div>
+          <div class="chart-wrap" style="height:260px"><canvas id="chart-cashflow"></canvas></div>
+        </div>
+        <div class="chart-card" style="margin-bottom:16px">
+          <div class="chart-title">Cumulative Cash Requirement</div>
+          <div class="chart-sub">Running total over 90 days</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="chart-cumulative"></canvas></div>
+        </div>
+        <div class="section-title">Weekly Breakdown</div>
+        <div class="proj-week-grid" id="proj-weeks"></div>
+      </section>
+
+      <!-- ══ WORKING CAPITAL ════════════════════════════════════════════════ -->
+      <section id="sec-wc" class="section">
+        <div class="wc-grid" id="wc-metrics"></div>
+        <div class="chart-grid chart-grid-2" style="margin-bottom:16px">
+          <div class="chart-card">
+            <div class="chart-title">Payment Velocity Trend</div>
+            <div class="chart-sub">Monthly invoiced vs paid</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="chart-velocity"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Cost Centre Exposure</div>
+            <div class="chart-sub">Outstanding by cost centre</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="chart-cc"></canvas></div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header"><span class="table-title">Cost Centre Outstanding Breakdown</span></div>
+          <div class="table-scroll"><table><thead><tr>
+            <th>CC #</th><th>Cost Centre</th><th>Open Invoices</th><th>Total Invoiced</th><th>Outstanding</th>
+          </tr></thead><tbody id="cc-table"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ══ PAYMENT PERFORMANCE ════════════════════════════════════════════ -->
+      <section id="sec-performance" class="section">
+        <div class="kpi-grid" id="perf-kpis"></div>
+        <div class="chart-card" style="margin-bottom:16px">
+          <div class="chart-title">On-Time vs Late Payments</div>
+          <div class="chart-sub">Based on vendor payment terms</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="chart-perf-pie"></canvas></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header"><span class="table-title">Worst Performing Vendors (Late Payments)</span></div>
+          <div class="table-scroll"><table><thead><tr>
+            <th>Vendor</th><th>Late Payments</th>
+          </tr></thead><tbody id="perf-worst"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ══ VENDORS ════════════════════════════════════════════════════════ -->
       <section id="sec-vendors" class="section">
         <div class="filter-bar">
-          <input class="search-input" id="vendor-search" placeholder="Search vendor, account, ecocash…" oninput="loadVendors()">
-          <select id="vendor-month-filter" onchange="loadVendors()">
-            <option value="">All Months</option>
-          </select>
+          <input class="search-inp" id="v-search" placeholder="Search vendor, account, ecocash…" oninput="loadVendors()">
+          <select id="v-month" onchange="loadVendors()"><option value="">All Months</option></select>
           <div style="flex:1"></div>
           <button class="btn btn-primary" onclick="openModal('modal-vendor')">+ Add Vendor</button>
         </div>
         <div class="table-wrap">
           <div class="table-header"><span class="table-title">Vendor Master</span></div>
           <div class="table-scroll"><table><thead><tr>
-            <th>Name</th><th>Category</th><th>Payment Method</th><th>Bank Account</th><th>EcoCash</th><th>Terms</th><th>Month Added</th><th>Action</th>
-          </tr></thead><tbody id="vendors-table"></tbody></table></div>
+            <th>Name</th><th>Category</th><th>Method</th><th>Bank Account</th><th>EcoCash</th><th>Terms</th><th>Month Added</th><th></th>
+          </tr></thead><tbody id="vendors-tbl"></tbody></table></div>
         </div>
       </section>
 
-      <!-- INVOICES -->
+      <!-- ══ INVOICES ═══════════════════════════════════════════════════════ -->
       <section id="sec-invoices" class="section">
         <div class="filter-bar">
-          <input class="search-input" id="inv-search" placeholder="Search invoice or vendor…" oninput="loadInvoices()">
-          <select id="inv-filter-status" onchange="loadInvoices()">
+          <input class="search-inp" id="i-search" placeholder="Invoice # or vendor…" oninput="loadInvoices()">
+          <select id="i-status" onchange="loadInvoices()">
             <option value="">All Statuses</option>
             <option>Draft</option><option>Submitted</option><option>Verified</option>
             <option>Approved</option><option>Rejected</option><option>Scheduled</option>
             <option>Partially Paid</option><option>Paid</option>
           </select>
-          <select id="inv-filter-month" onchange="loadInvoices()">
-            <option value="">All Months</option>
-          </select>
+          <select id="i-month" onchange="loadInvoices()"><option value="">All Months</option></select>
           <div style="flex:1"></div>
           <button class="btn btn-primary" onclick="openModal('modal-invoice');populateVendorSelects()">+ New Invoice</button>
         </div>
         <div class="table-wrap">
           <div class="table-header"><span class="table-title">Invoice Register</span></div>
           <div class="table-scroll"><table><thead><tr>
-            <th>Invoice #</th><th>Vendor</th><th>Month</th><th>CC#</th><th>Total</th><th>Outstanding</th><th>Status</th><th>Age</th><th>Actions</th>
-          </tr></thead><tbody id="invoices-table"></tbody></table></div>
+            <th>Invoice #</th><th>Vendor</th><th>Month</th><th>CC #</th><th>Total</th><th>Outstanding</th><th>Status</th><th>Risk Age</th><th>Actions</th>
+          </tr></thead><tbody id="invoices-tbl"></tbody></table></div>
         </div>
       </section>
 
-      <!-- BATCHES -->
+      <!-- ══ BATCHES ════════════════════════════════════════════════════════ -->
       <section id="sec-batches" class="section">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
-          <button class="btn btn-primary" onclick="openCreateBatch()">+ New Batch</button>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <button class="btn btn-primary" onclick="openModal('modal-batch')">+ New Batch</button>
         </div>
         <div class="table-wrap">
           <div class="table-header"><span class="table-title">Payment Batches</span></div>
           <div class="table-scroll"><table><thead><tr>
-            <th>Reference</th><th>Scheduled Date</th><th>Invoices</th><th>Vendors</th><th>Total Scheduled</th><th>Created By</th><th>Action</th>
-          </tr></thead><tbody id="batches-table"></tbody></table></div>
+            <th>Reference</th><th>Scheduled Date</th><th>Invoices</th><th>Vendors</th><th>Total Scheduled</th><th>Created By</th><th></th>
+          </tr></thead><tbody id="batches-tbl"></tbody></table></div>
         </div>
       </section>
 
-      <!-- OUTSTANDING -->
+      <!-- ══ OUTSTANDING ════════════════════════════════════════════════════ -->
       <section id="sec-outstanding" class="section">
         <div class="filter-bar">
           <select id="out-month" onchange="loadOutstanding()"><option value="">All Months</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="loadOutstanding()">↻ Refresh</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadOutstanding()">↻</button>
         </div>
         <div class="table-wrap">
           <div class="table-header"><span class="table-title">Vendor Outstanding Summary</span></div>
           <div class="table-scroll"><table><thead><tr>
-            <th>Vendor</th><th>Category</th><th>Payment Method</th><th>Account / EcoCash</th><th>Open Invoices</th><th>Total Outstanding</th>
-          </tr></thead><tbody id="outstanding-table"></tbody>
-          <tfoot><tr id="outstanding-footer"></tr></tfoot></table></div>
+            <th>Vendor</th><th>Category</th><th>Method</th><th>Account / EcoCash</th><th>Invoices</th><th>Outstanding</th>
+          </tr></thead><tbody id="out-tbl"></tbody><tfoot><tr id="out-foot"></tr></tfoot></table></div>
         </div>
       </section>
 
-      <!-- AGING -->
+      <!-- ══ AGING ══════════════════════════════════════════════════════════ -->
       <section id="sec-aging" class="section">
         <div class="filter-bar">
           <select id="age-month" onchange="loadAging()"><option value="">All Months</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="loadAging()">↻ Refresh</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadAging()">↻</button>
         </div>
         <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Aging Analysis (from Invoice Date)</span></div>
+          <div class="table-header"><span class="table-title">AP Aging Analysis (from Invoice Date)</span></div>
           <div class="table-scroll"><table><thead><tr>
             <th>Vendor</th><th>0–30 days</th><th>31–60 days</th><th>61–90 days</th><th>91+ days</th><th>Total</th>
-          </tr></thead><tbody id="aging-table"></tbody>
-          <tfoot><tr id="aging-footer"></tr></tfoot></table></div>
+          </tr></thead><tbody id="aging-tbl"></tbody><tfoot><tr id="aging-foot"></tr></tfoot></table></div>
         </div>
       </section>
 
-      <!-- BACKLOG -->
+      <!-- ══ BACKLOG ═════════════════════════════════════════════════════════ -->
       <section id="sec-backlog" class="section">
         <div class="filter-bar">
-          <select id="backlog-month" onchange="loadBacklog()"><option value="">All Months</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="loadBacklog()">↻ Refresh</button>
+          <select id="bl-month" onchange="loadBacklog()"><option value="">All Months</option></select>
+          <button class="btn btn-ghost btn-sm" onclick="loadBacklog()">↻</button>
         </div>
         <div class="table-wrap">
           <div class="table-header"><span class="table-title">Approval Backlog</span></div>
           <div class="table-scroll"><table><thead><tr>
-            <th>Invoice #</th><th>Vendor</th><th>Month</th><th>CC#</th><th>Amount</th><th>Status</th><th>Actions</th>
-          </tr></thead><tbody id="backlog-table"></tbody></table></div>
+            <th>Invoice #</th><th>Vendor</th><th>Month</th><th>CC #</th><th>Amount</th><th>Status</th><th>Actions</th>
+          </tr></thead><tbody id="backlog-tbl"></tbody></table></div>
         </div>
       </section>
 
-      <!-- REJECTIONS -->
+      <!-- ══ REJECTIONS ══════════════════════════════════════════════════════ -->
       <section id="sec-rejections" class="section">
         <div class="filter-bar">
           <select id="rej-month" onchange="loadRejections()"><option value="">All Months</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="loadRejections()">↻ Refresh</button>
         </div>
-        <div id="rejections-content"></div>
+        <div id="rej-content"></div>
       </section>
 
-      <!-- SCHEDULE -->
+      <!-- ══ SCHEDULE ════════════════════════════════════════════════════════ -->
       <section id="sec-schedule" class="section">
         <div class="table-wrap">
           <div class="table-header"><span class="table-title">Upcoming Payment Schedule</span>
-            <button class="btn btn-ghost btn-sm" onclick="loadSchedule()">↻ Refresh</button>
+            <button class="btn btn-ghost btn-sm" onclick="loadSchedule()">↻</button>
           </div>
           <div class="table-scroll"><table><thead><tr>
-            <th>Batch</th><th>Date</th><th>Vendor</th><th>Invoice #</th><th>Payment Method</th><th>Account</th><th>Scheduled Amount</th>
-          </tr></thead><tbody id="schedule-table"></tbody></table></div>
+            <th>Batch</th><th>Date</th><th>Vendor</th><th>Invoice #</th><th>Method</th><th>Account</th><th>Amount</th>
+          </tr></thead><tbody id="sched-tbl"></tbody></table></div>
         </div>
       </section>
 
-      <!-- MONTHLY SUMMARY -->
+      <!-- ══ MONTHLY ══════════════════════════════════════════════════════════ -->
       <section id="sec-monthly" class="section">
+        <div class="chart-card" style="margin-bottom:16px">
+          <div class="chart-title">Monthly Invoice &amp; Payment Activity</div>
+          <div class="chart-sub">Total invoiced vs paid per month</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="chart-monthly"></canvas></div>
+        </div>
         <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Monthly Invoice Summary</span>
-            <button class="btn btn-ghost btn-sm" onclick="loadMonthlySummary()">↻ Refresh</button>
-          </div>
+          <div class="table-header"><span class="table-title">Monthly Summary</span></div>
           <div class="table-scroll"><table><thead><tr>
-            <th>Month</th><th>Total Invoices</th><th>Total Amount</th><th>Paid Amount</th><th>Outstanding</th><th>Rejected</th>
-          </tr></thead><tbody id="monthly-table"></tbody></table></div>
+            <th>Month</th><th>Invoices</th><th>Total Invoiced</th><th>Paid</th><th>Outstanding</th><th>Rejected</th>
+          </tr></thead><tbody id="monthly-tbl"></tbody></table></div>
         </div>
       </section>
 
-    </div>
+    </div><!-- /content -->
   </main>
 </div>
 
-<!-- MODALS -->
+<!-- ══ MODALS ══════════════════════════════════════════════════════════════ -->
 
-<!-- Vendor -->
 <div class="overlay" id="modal-vendor">
   <div class="modal">
-    <div class="modal-title">Add Vendor</div>
-    <div class="modal-sub">Register a new local vendor</div>
-    <div class="field"><label>Vendor Name *</label><input id="v-name" placeholder="e.g. ABC Supplies Ltd"></div>
+    <div class="modal-title">Add Vendor</div><div class="modal-sub">Register a new local vendor</div>
+    <div class="field"><label>Vendor Name *</label><input id="vn-name" placeholder="Company name"></div>
     <div class="field-row">
-      <div class="field"><label>Category *</label>
-        <select id="v-cat"><option>Supplies</option><option>Services</option><option>Other</option></select>
-      </div>
-      <div class="field"><label>Payment Terms (days)</label><input id="v-terms" type="number" value="30"></div>
+      <div class="field"><label>Category *</label><select id="vn-cat"><option>Supplies</option><option>Services</option><option>Other</option></select></div>
+      <div class="field"><label>Payment Terms (days)</label><input id="vn-terms" type="number" value="30"></div>
     </div>
     <div class="field"><label>Payment Method *</label>
-      <select id="v-paymethod" onchange="togglePayFields()">
-        <option value="Bank">Bank</option>
-        <option value="EcoCash">EcoCash</option>
-        <option value="Cash">Cash</option>
-        <option value="Cheque">Cheque</option>
+      <select id="vn-method" onchange="togglePayFields()">
+        <option value="Bank">Bank Transfer</option><option value="EcoCash">EcoCash</option><option value="Cash">Cash</option><option value="Cheque">Cheque</option>
       </select>
     </div>
     <div id="bank-fields">
       <div class="field-row">
-        <div class="field"><label>Bank Name</label><input id="v-bank" placeholder="e.g. CABS, ZB"></div>
-        <div class="field"><label>Bank Account Number</label><input id="v-account" placeholder="Account #"></div>
+        <div class="field"><label>Bank Name</label><input id="vn-bank" placeholder="e.g. CABS, ZB"></div>
+        <div class="field"><label>Bank Account Number</label><input id="vn-acc" placeholder="Account #"></div>
       </div>
     </div>
     <div id="eco-fields" style="display:none">
-      <div class="field"><label>EcoCash Number</label><input id="v-ecocash" placeholder="e.g. 0771234567"></div>
+      <div class="field"><label>EcoCash Number</label><input id="vn-eco" placeholder="e.g. 0771234567"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-vendor')">Cancel</button>
@@ -457,28 +558,26 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
-<!-- Invoice -->
 <div class="overlay" id="modal-invoice">
   <div class="modal">
-    <div class="modal-title">New Invoice / Claim</div>
-    <div class="modal-sub">Create a new vendor invoice record</div>
+    <div class="modal-title">New Invoice / Claim</div><div class="modal-sub">Create a new vendor invoice record</div>
     <div class="field-row">
-      <div class="field"><label>Invoice Number *</label><input id="i-num" placeholder="INV-2024-001"></div>
-      <div class="field"><label>Vendor *</label><select id="i-vendor"></select></div>
+      <div class="field"><label>Invoice Number *</label><input id="in-num" placeholder="INV-2024-001"></div>
+      <div class="field"><label>Vendor *</label><select id="in-vendor"></select></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Invoice Date *</label><input id="i-date" type="date"></div>
-      <div class="field"><label>Due Date</label><input id="i-due" type="date"></div>
+      <div class="field"><label>Invoice Date *</label><input id="in-date" type="date"></div>
+      <div class="field"><label>Due Date</label><input id="in-due" type="date"></div>
     </div>
-    <div class="field"><label>Description *</label><input id="i-desc" placeholder="Goods/services description"></div>
-    <div class="field"><label>Total Amount (USD) *</label><input id="i-amount" type="number" placeholder="0.00" step="0.01"></div>
+    <div class="field"><label>Description *</label><input id="in-desc" placeholder="Goods/services description"></div>
+    <div class="field"><label>Total Amount (USD) *</label><input id="in-amt" type="number" placeholder="0.00" step="0.01"></div>
     <div class="field-row">
-      <div class="field"><label>Cost Centre Number</label><input id="i-ccnum" type="number" placeholder="e.g. 1001"></div>
-      <div class="field"><label>Cost Centre Name</label><input id="i-ccname" placeholder="e.g. Mining-Ops"></div>
+      <div class="field"><label>Cost Centre Number</label><input id="in-ccn" type="number" placeholder="e.g. 1001"></div>
+      <div class="field"><label>Cost Centre Name</label><input id="in-ccname" placeholder="e.g. Mining-Ops"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Doc Reference</label><input id="i-doc" placeholder="PO / attachment ref"></div>
-      <div class="field"><label>Created By *</label><input id="i-by"></div>
+      <div class="field"><label>Doc Reference</label><input id="in-doc" placeholder="PO / attachment ref"></div>
+      <div class="field"><label>Created By *</label><input id="in-by"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-invoice')">Cancel</button>
@@ -487,38 +586,29 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
-<!-- Workflow -->
 <div class="overlay" id="modal-workflow">
   <div class="modal">
-    <div class="modal-title" id="wf-title">Action</div>
-    <div class="modal-sub" id="wf-sub"></div>
+    <div class="modal-title" id="wf-title">Action</div><div class="modal-sub" id="wf-sub"></div>
     <div class="field"><label>Performed By *</label><input id="wf-by"></div>
-    <div class="field"><label id="wf-notes-label">Notes</label><input id="wf-notes" placeholder="Optional"></div>
+    <div class="field"><label id="wf-notes-lbl">Notes</label><input id="wf-notes" placeholder="Optional"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-workflow')">Cancel</button>
-      <button class="btn btn-primary" id="wf-btn" onclick="submitWorkflow()">Confirm</button>
+      <button class="btn btn-primary" onclick="submitWorkflow()">Confirm</button>
     </div>
   </div>
 </div>
 
-<!-- Payment -->
 <div class="overlay" id="modal-payment">
   <div class="modal">
-    <div class="modal-title">Record Payment</div>
-    <div class="modal-sub" id="pay-sub"></div>
+    <div class="modal-title">Record Payment</div><div class="modal-sub" id="pay-sub"></div>
     <div class="field-row">
       <div class="field"><label>Payment Date *</label><input id="pay-date" type="date"></div>
-      <div class="field"><label>Amount to Pay *</label><input id="pay-amount" type="number" placeholder="0.00" step="0.01"></div>
+      <div class="field"><label>Amount to Pay *</label><input id="pay-amt" type="number" placeholder="0.00" step="0.01"></div>
     </div>
     <div class="field"><label>Payment Method *</label>
-      <select id="pay-method">
-        <option value="Bank">Bank Transfer</option>
-        <option value="EcoCash">EcoCash</option>
-        <option value="Cash">Cash</option>
-        <option value="Cheque">Cheque</option>
-      </select>
+      <select id="pay-method"><option value="Bank">Bank Transfer</option><option value="EcoCash">EcoCash</option><option value="Cash">Cash</option><option value="Cheque">Cheque</option></select>
     </div>
-    <div class="field"><label>Bank Reference / Transaction ID</label><input id="pay-ref" placeholder="TXN-12345"></div>
+    <div class="field"><label>Reference / Transaction ID</label><input id="pay-ref" placeholder="TXN-12345"></div>
     <div class="field"><label>Recorded By *</label><input id="pay-by"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-payment')">Cancel</button>
@@ -527,14 +617,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
-<!-- Add to Batch -->
 <div class="overlay" id="modal-add-batch">
   <div class="modal">
-    <div class="modal-title">Schedule in Batch</div>
-    <div class="modal-sub" id="addbatch-sub"></div>
-    <div class="field"><label>Select Batch *</label><select id="addbatch-bid"></select></div>
-    <div class="field"><label>Scheduled Amount *</label><input id="addbatch-amount" type="number" step="0.01"></div>
-    <div class="field"><label>Added By *</label><input id="addbatch-by"></div>
+    <div class="modal-title">Schedule in Batch</div><div class="modal-sub" id="ab-sub"></div>
+    <div class="field"><label>Select Batch *</label><select id="ab-bid"></select></div>
+    <div class="field"><label>Scheduled Amount *</label><input id="ab-amt" type="number" step="0.01"></div>
+    <div class="field"><label>Added By *</label><input id="ab-by"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-add-batch')">Cancel</button>
       <button class="btn btn-primary" onclick="submitAddBatch()">Schedule</button>
@@ -542,715 +630,663 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
-<!-- New Batch -->
 <div class="overlay" id="modal-batch">
-  <div class="modal modal-lg">
-    <div class="modal-title">Create Payment Batch</div>
-    <div class="modal-sub">A batch can include many vendors and invoices</div>
-    <div class="field-row">
-      <div class="field"><label>Batch Reference *</label><input id="b-ref" placeholder="BATCH-APR-W1"></div>
-      <div class="field"><label>Scheduled Date *</label><input id="b-date" type="date"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Notes</label><input id="b-notes" placeholder="e.g. Weekly payrun April"></div>
-      <div class="field"><label>Created By *</label><input id="b-by"></div>
-    </div>
-
-    <!-- Inline invoice lines -->
-    <div style="margin-top:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Invoice Lines (optional — add invoices to batch now)</span>
-        <button class="btn btn-ghost btn-sm" onclick="addBatchLine()">+ Add Line</button>
-      </div>
-      <div id="batch-lines-wrap" style="display:flex;flex-direction:column;gap:8px"></div>
-      <div id="batch-lines-total" style="text-align:right;font-size:12px;font-family:var(--mono);color:var(--accent);margin-top:6px"></div>
-    </div>
-
+  <div class="modal">
+    <div class="modal-title">Create Payment Batch</div><div class="modal-sub">Can include many vendors &amp; invoices</div>
+    <div class="field"><label>Batch Reference *</label><input id="b-ref" placeholder="BATCH-APR-W1"></div>
+    <div class="field"><label>Scheduled Date *</label><input id="b-date" type="date"></div>
+    <div class="field"><label>Notes</label><input id="b-notes" placeholder="e.g. Weekly payrun April"></div>
+    <div class="field"><label>Created By *</label><input id="b-by"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-batch')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitBatch()">Create Batch</button>
+      <button class="btn btn-primary" onclick="submitBatch()">Create</button>
     </div>
   </div>
 </div>
 
-<!-- Batch Items -->
 <div class="overlay" id="modal-batch-items">
   <div class="modal modal-lg">
-    <div class="modal-title" id="bi-title">Batch Items</div>
-    <div class="modal-sub" id="bi-sub"></div>
+    <div class="modal-title" id="bi-title">Batch Items</div><div class="modal-sub" id="bi-sub"></div>
     <div class="table-scroll"><table><thead><tr>
-      <th>Vendor</th><th>Invoice #</th><th>Payment Method</th><th>Account</th><th>Scheduled Amount</th><th>Status</th>
-    </tr></thead><tbody id="bi-table"></tbody></table></div>
+      <th>Vendor</th><th>Invoice #</th><th>Method</th><th>Account</th><th>Scheduled</th><th>Status</th>
+    </tr></thead><tbody id="bi-tbl"></tbody></table></div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-batch-items')">Close</button></div>
   </div>
 </div>
 
-<!-- Vendor Detail -->
 <div class="overlay" id="modal-vendor-detail">
-  <div class="modal modal-lg">
-    <div id="vendor-detail-content"></div>
+  <div class="modal modal-lg"><div id="vd-content"></div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendor-detail')">Close</button></div>
   </div>
 </div>
 
-<!-- Audit Trail -->
 <div class="overlay" id="modal-audit">
   <div class="modal">
-    <div class="modal-title" id="audit-title">Audit Trail</div>
-    <div class="modal-sub" id="audit-sub"></div>
-    <div class="timeline" id="audit-timeline"></div>
+    <div class="modal-title" id="aud-title">Audit Trail</div><div class="modal-sub" id="aud-sub"></div>
+    <div id="aud-tl" style="padding:8px 0"></div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-audit')">Close</button></div>
   </div>
 </div>
 
-<div class="toast-wrap" id="toast-wrap"></div>
+<div class="toast-wrap" id="toasts"></div>
 
 <script>
-const pageMeta = {
-  dashboard:{title:'Dashboard',sub:'Overview of vendor payables'},
-  vendors:{title:'Vendors',sub:'Vendor master register — search by name, account or EcoCash'},
-  invoices:{title:'Invoices',sub:'Invoice & claim register — filter by month or status'},
-  batches:{title:'Payment Batches',sub:'Multi-vendor payment runs'},
+// ── State ────────────────────────────────────────────────────────────────────
+let currentUser = null;
+let _wfInvoiceId = null, _wfAction = null;
+let _payInvoiceId = null, _payMax = 0;
+let _abInvoiceId = null;
+let _charts = {};
+
+const PAGE_META = {
+  dashboard:{title:'Dashboard',sub:'Financial operations overview'},
+  risk:{title:'Vendor Risk Scorecard',sub:'Risk scoring · aging breach · outstanding exposure'},
+  cashflow:{title:'Cash Flow Projection',sub:'13-week forward cash requirement forecast'},
+  wc:{title:'Working Capital Analytics',sub:'DPO · AP turnover · payment velocity · cost centre breakdown'},
+  performance:{title:'Payment Performance',sub:'On-time vs late payments · approval cycle time'},
+  vendors:{title:'Vendors',sub:'Vendor master — search by name, account or EcoCash'},
+  invoices:{title:'Invoices',sub:'Invoice register — filter by month, status or keyword'},
+  batches:{title:'Payment Batches',sub:'Multi-vendor scheduled payment runs'},
   outstanding:{title:'Outstanding Summary',sub:'Total payables by vendor'},
-  aging:{title:'Aging Analysis',sub:'Payables breakdown by age'},
-  backlog:{title:'Approval Backlog',sub:'Invoices awaiting action'},
+  aging:{title:'AP Aging Analysis',sub:'Accounts payable by age bucket (from invoice date)'},
+  backlog:{title:'Approval Backlog',sub:'Invoices awaiting verification or approval'},
   rejections:{title:'Rejections',sub:'Rejected invoices grouped by month'},
   schedule:{title:'Payment Schedule',sub:'Upcoming scheduled payments'},
-  monthly:{title:'Monthly Summary',sub:'Invoice totals grouped by month'},
+  monthly:{title:'Monthly Summary',sub:'Invoice totals and activity by month'},
 };
 
-let currentUser = null;
-let currentInvoiceId = null;
-let currentWorkflowAction = null;
-let currentPayInvoice = null;
-let currentPayOutstanding = 0;
-let currentAddBatchInvoice = null;
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmtM = v => '$'+Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtMonth = ym => { try{return new Date(ym+'-01').toLocaleDateString('en-US',{month:'long',year:'numeric'})}catch{return ym} };
+const today = () => new Date().toISOString().split('T')[0];
 
-// ── AUTH ──────────────────────────────────────────────────────────────────────
-function switchAuthTab(tab) {
-  const isSignin = tab === 'signin';
-  document.getElementById('form-signin').style.display = isSignin ? '' : 'none';
-  document.getElementById('form-register').style.display = isSignin ? 'none' : '';
-  document.getElementById('tab-signin').style.background = isSignin ? 'var(--accent)' : 'transparent';
-  document.getElementById('tab-signin').style.color = isSignin ? '#fff' : 'var(--muted)';
-  document.getElementById('tab-register').style.background = isSignin ? 'transparent' : 'var(--accent)';
-  document.getElementById('tab-register').style.color = isSignin ? 'var(--muted)' : '#fff';
-  document.getElementById('login-error').style.display = 'none';
-  document.getElementById('login-success').style.display = 'none';
+function statusBadge(s){
+  const m={Draft:'badge-draft',Submitted:'badge-submitted',Verified:'badge-verified',Approved:'badge-approved',Rejected:'badge-rejected',Scheduled:'badge-scheduled','Partially Paid':'badge-partial',Paid:'badge-paid'};
+  return `<span class="badge ${m[s]||''}">${s}</span>`;
+}
+function ageBadge(b){
+  const m={'0-30 days':'badge-0-30','31-60 days':'badge-31-60','61-90 days':'badge-61-90','91+ days':'badge-91'};
+  return `<span class="badge ${m[b]||''}">${b}</span>`;
+}
+function payBadge(p){
+  if(p==='EcoCash') return `<span class="badge badge-eco">EcoCash</span>`;
+  if(p==='Cash')    return `<span class="badge badge-cash">Cash</span>`;
+  return `<span class="badge badge-bank">${p||'Bank'}</span>`;
+}
+function riskBadge(label){
+  const m={Low:'badge-risk-low',Medium:'badge-risk-medium',High:'badge-risk-high',Critical:'badge-risk-critical'};
+  return `<span class="badge ${m[label]||''}">${label}</span>`;
 }
 
-function setCurrentUser(r) {
-  currentUser = r;
-  document.getElementById('user-initials').textContent = r.initials;
-  document.getElementById('user-name').textContent = r.username;
-  document.getElementById('user-role').textContent = r.role;
-  document.getElementById('i-by').value = r.username;
-  document.getElementById('wf-by').value = r.username;
-  document.getElementById('pay-by').value = r.username;
-  document.getElementById('addbatch-by').value = r.username;
-  document.getElementById('b-by').value = r.username;
+function toast(msg,type='success'){
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.textContent=(type==='success'?'✓ ':'✗ ')+msg;
+  $('toasts').appendChild(t);
+  setTimeout(()=>t.remove(),3200);
 }
 
-async function doLogin() {
-  const username = document.getElementById('login-user').value.trim();
-  const password = document.getElementById('login-pass').value.trim();
-  const errEl = document.getElementById('login-error');
-  errEl.style.display = 'none';
-  const r = await api('/api/login','POST',{username,password});
-  if(r.ok) {
-    setCurrentUser(r);
-    document.getElementById('login-page').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    populateMonthFilters();
-    showSection('dashboard');
-  } else {
-    errEl.textContent = r.error; errEl.style.display = 'block';
-  }
+function openModal(id){$(id).classList.add('open')}
+function closeModal(id){$(id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+
+function destroyChart(id){if(_charts[id]){_charts[id].destroy();delete _charts[id]}}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(path,method='GET',body=null){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(path,opts); return r.json();
 }
 
-async function doRegister() {
-  const username = document.getElementById('reg-user').value.trim();
-  const password = document.getElementById('reg-pass').value.trim();
-  const password2 = document.getElementById('reg-pass2').value.trim();
-  const role = document.getElementById('reg-role').value;
-  const errEl = document.getElementById('login-error');
-  const okEl  = document.getElementById('login-success');
-  errEl.style.display = 'none'; okEl.style.display = 'none';
-  if(password !== password2) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
-  const r = await api('/api/register','POST',{username,password,role});
-  if(r.ok) {
-    okEl.textContent = `Account created! You can now sign in as "${r.username}".`;
-    okEl.style.display = 'block';
-    setTimeout(() => switchAuthTab('signin'), 2000);
-    document.getElementById('login-user').value = username;
-  } else {
-    errEl.textContent = r.error; errEl.style.display = 'block';
-  }
+// ── Auth ─────────────────────────────────────────────────────────────────────
+async function doLogin(){
+  const user=$('login-user').value.trim(), pass=$('login-pass').value.trim();
+  const r=await api('/api/login','POST',{username:user,password:pass});
+  if(r.ok){
+    currentUser=r;
+    $('u-init').textContent=r.initials; $('u-name').textContent=r.username; $('u-role').textContent=r.role;
+    ['in-by','wf-by','pay-by','ab-by','b-by'].forEach(id=>{const el=$(id);if(el)el.value=r.username});
+    $('login-page').style.display='none'; $('app').style.display='flex';
+    populateMonthFilters(); nav('dashboard');
+  } else { $('login-err').textContent=r.error; $('login-err').style.display='block'; }
 }
+$('login-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+async function doLogout(){ await api('/api/logout','POST'); location.reload(); }
 
-document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-
-async function doLogout() {
-  await api('/api/logout','POST');
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-page').style.display = 'flex';
-  document.getElementById('login-pass').value = '';
-}
-
-// ── NAV ───────────────────────────────────────────────────────────────────────
-function showSection(name, el) {
+// ── Navigation ───────────────────────────────────────────────────────────────
+function nav(name, el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('sec-'+name).classList.add('active');
-  if(el) el.classList.add('active');
-  else document.querySelector(`[onclick*="'${name}'"]`)?.classList.add('active');
-  const m = pageMeta[name] || {};
-  document.getElementById('page-title').textContent = m.title||name;
-  document.getElementById('page-sub').textContent = m.sub||'';
-  const loaders = {
+  $('sec-'+name).classList.add('active');
+  (el || document.querySelector(`.nav-item[onclick*="'${name}'"]`))?.classList.add('active');
+  const m=PAGE_META[name]||{};
+  $('page-title').textContent=m.title||name; $('page-sub').textContent=m.sub||'';
+  ({
     dashboard:()=>{loadDashboard();loadRecentInvoices()},
+    risk:loadRisk, cashflow:loadCashflow, wc:loadWorkingCapital, performance:loadPerformance,
     vendors:loadVendors, invoices:loadInvoices, batches:loadBatches,
     outstanding:loadOutstanding, aging:loadAging, backlog:loadBacklog,
     rejections:loadRejections, schedule:loadSchedule, monthly:loadMonthlySummary,
-  };
-  if(loaders[name]) loaders[name]();
+  }[name]||function(){})();
 }
 
-// ── TOAST ─────────────────────────────────────────────────────────────────────
-function toast(msg, type='success') {
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.textContent = (type==='success'?'✓ ':'✗ ')+msg;
-  document.getElementById('toast-wrap').appendChild(t);
-  setTimeout(()=>t.remove(), 3200);
-}
-
-// ── MODAL ─────────────────────────────────────────────────────────────────────
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.overlay').forEach(o=>{
-  o.addEventListener('click', e=>{ if(e.target===o) o.classList.remove('open'); });
-});
-
-// ── FORMAT ────────────────────────────────────────────────────────────────────
-const fmtMoney = v => '$'+Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-
-function statusBadge(s) {
-  const map={'Draft':'badge-draft','Submitted':'badge-submitted','Verified':'badge-verified',
-    'Approved':'badge-approved','Rejected':'badge-rejected','Scheduled':'badge-scheduled',
-    'Partially Paid':'badge-partial','Paid':'badge-paid'};
-  return `<span class="badge ${map[s]||''}">${s}</span>`;
-}
-function ageBadge(b) {
-  const map={'0-30 days':'badge-0-30','31-60 days':'badge-31-60','61-90 days':'badge-61-90','91+ days':'badge-91'};
-  return `<span class="badge ${map[b]||''}">${b}</span>`;
-}
-function payBadge(m) {
-  if(m==='EcoCash') return `<span class="badge badge-eco">EcoCash</span>`;
-  if(m==='Cash')    return `<span class="badge badge-cash">Cash</span>`;
-  return `<span class="badge badge-bank">${m||'Bank'}</span>`;
-}
-function fmtMonth(ym) {
-  try { const d=new Date(ym+'-01'); return d.toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
-  catch { return ym; }
-}
-
-// ── API ───────────────────────────────────────────────────────────────────────
-async function api(path, method='GET', body=null) {
-  const opts={method,headers:{'Content-Type':'application/json'}};
-  if(body) opts.body=JSON.stringify(body);
-  const r = await fetch(path, opts);
-  return r.json();
-}
-
-// ── MONTH FILTERS ─────────────────────────────────────────────────────────────
-async function populateMonthFilters() {
-  const invMonths = await api('/api/invoices/months');
-  const venMonths = await api('/api/vendors/months');
-  const invSels = ['inv-filter-month','out-month','age-month','backlog-month','rej-month'];
-  invSels.forEach(id => {
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.innerHTML = '<option value="">All Months</option>' +
-      invMonths.map(m=>`<option value="${m}">${fmtMonth(m)}</option>`).join('');
+// ── Month filters ─────────────────────────────────────────────────────────────
+async function populateMonthFilters(){
+  const [im,vm]=await Promise.all([api('/api/invoices/months'),api('/api/vendors/months')]);
+  ['i-month','out-month','age-month','bl-month','rej-month'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    el.innerHTML='<option value="">All Months</option>'+im.map(m=>`<option value="${m}">${fmtMonth(m)}</option>`).join('');
   });
-  const venSel = document.getElementById('vendor-month-filter');
-  if(venSel) venSel.innerHTML = '<option value="">All Months</option>' +
-    venMonths.map(m=>`<option value="${m}">${fmtMonth(m)}</option>`).join('');
+  const vs=$('v-month'); if(vs) vs.innerHTML='<option value="">All Months</option>'+vm.map(m=>`<option value="${m}">${fmtMonth(m)}</option>`).join('');
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────────────
-async function loadDashboard() {
-  const d = await api('/api/reports/dashboard');
-  document.getElementById('dash-stats').innerHTML = `
-    <div class="stat-card accent"><div class="stat-label">Total Outstanding</div><div class="stat-value">${fmtMoney(d.total_outstanding)}</div></div>
-    <div class="stat-card warn"><div class="stat-label">Pending Approval</div><div class="stat-value">${d.pending_approval}</div></div>
-    <div class="stat-card"><div class="stat-label">Approved (Unsched.)</div><div class="stat-value">${d.approved_unscheduled}</div></div>
-    <div class="stat-card"><div class="stat-label">Scheduled</div><div class="stat-value">${fmtMoney(d.scheduled_total)}</div></div>
-    <div class="stat-card danger"><div class="stat-label">Overdue 91+ days</div><div class="stat-value">${d.overdue_91plus}</div></div>
-    <div class="stat-card success"><div class="stat-label">Paid This Month</div><div class="stat-value">${fmtMoney(d.paid_this_month)}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Vendors</div><div class="stat-value">${d.total_vendors}</div></div>
-    <div class="stat-card danger"><div class="stat-label">Rejected This Month</div><div class="stat-value">${d.rejected_this_month}</div></div>
+// ── Dashboard ────────────────────────────────────────────────────────────────
+async function loadDashboard(){
+  const [d,risk,aging]=await Promise.all([
+    api('/api/reports/dashboard'),
+    api('/api/analytics/vendor_risk'),
+    api('/api/reports/aging'),
+  ]);
+
+  $('dash-kpis').innerHTML=`
+    <div class="kpi accent"><div class="kpi-label">Total Outstanding</div><div class="kpi-value">${fmtM(d.total_outstanding)}</div></div>
+    <div class="kpi warn"><div class="kpi-label">Pending Approval</div><div class="kpi-value">${d.pending_approval}</div></div>
+    <div class="kpi"><div class="kpi-label">Approved (Unsched.)</div><div class="kpi-value">${d.approved_unscheduled}</div></div>
+    <div class="kpi"><div class="kpi-label">Scheduled</div><div class="kpi-value">${fmtM(d.scheduled_total)}</div></div>
+    <div class="kpi danger"><div class="kpi-label">Overdue 91+ days</div><div class="kpi-value">${d.overdue_91plus}</div></div>
+    <div class="kpi success"><div class="kpi-label">Paid This Month</div><div class="kpi-value">${fmtM(d.paid_this_month)}</div></div>
+    <div class="kpi"><div class="kpi-label">Total Vendors</div><div class="kpi-value">${d.total_vendors}</div></div>
+    <div class="kpi danger"><div class="kpi-label">Rejected This Month</div><div class="kpi-value">${d.rejected_this_month}</div></div>
   `;
-  document.getElementById('dash-vendors').innerHTML = (d.top_vendors||[]).map(v=>`
-    <div class="vendor-card">
-      <div class="vendor-card-name">${v.name}</div>
-      <div class="vendor-card-row"><span class="lbl">Method</span><span>${payBadge(v.payment_method)}</span></div>
-      ${v.bank_account?`<div class="vendor-card-row"><span class="lbl">Account</span><span class="val">${v.bank_account}</span></div>`:''}
-      ${v.ecocash_number?`<div class="vendor-card-row"><span class="lbl">EcoCash</span><span class="val">${v.ecocash_number}</span></div>`:''}
-      <div class="vendor-card-outstanding">${fmtMoney(v.outstanding)}</div>
+
+  // Risk alerts
+  const critical=risk.filter(r=>r.risk_label==='Critical');
+  const high=risk.filter(r=>r.risk_label==='High');
+  let alerts='';
+  if(critical.length) alerts+=`<div class="alert-banner alert-critical"><span class="alert-icon">🔴</span><div><strong>CRITICAL RISK:</strong> ${critical.map(r=>r.vendor).join(', ')} — outstanding payables breaching payment terms by over 60 days. Immediate management attention required.</div></div>`;
+  if(high.length) alerts+=`<div class="alert-banner alert-high"><span class="alert-icon">🟠</span><div><strong>HIGH RISK:</strong> ${high.map(r=>r.vendor).join(', ')} — aging breach detected. Schedule payment or escalate approval.</div></div>`;
+  $('dash-alerts').innerHTML=alerts;
+
+  // Aging bar chart
+  const t=aging.totals||{};
+  const buckets=['0-30 days','31-60 days','61-90 days','91+ days'];
+  destroyChart('aging-bar');
+  _charts['aging-bar']=new Chart($('chart-aging-bar'),{
+    type:'bar',
+    data:{labels:['0–30','31–60','61–90','91+'],
+      datasets:[{label:'Outstanding ($)',data:buckets.map(b=>t[b]||0),
+        backgroundColor:['rgba(34,197,94,.7)','rgba(245,158,11,.7)','rgba(251,146,60,.7)','rgba(239,68,68,.7)'],
+        borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v,color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
+              x:{ticks:{color:'#6b7a99'},grid:{display:false}}}}
+  });
+
+  // Status pie
+  const statuses=['Draft','Submitted','Verified','Approved','Scheduled','Partially Paid','Paid','Rejected'];
+  const invData=await api('/api/invoices');
+  const counts={};
+  statuses.forEach(s=>counts[s]=0);
+  invData.forEach(i=>{ if(counts[i.status]!==undefined) counts[i.status]++; });
+  const activeStats=statuses.filter(s=>counts[s]>0);
+  const colors=['#6b7a99','#f59e0b','#4f8ef7','#22d3a5','#a78bfa','#fb923c','#22c55e','#ef4444'];
+  destroyChart('status-pie');
+  _charts['status-pie']=new Chart($('chart-status-pie'),{
+    type:'doughnut',
+    data:{labels:activeStats,datasets:[{data:activeStats.map(s=>counts[s]),
+      backgroundColor:activeStats.map(s=>colors[statuses.indexOf(s)]),borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'right',labels:{color:'#6b7a99',font:{size:10},boxWidth:10}}}}
+  });
+}
+
+async function loadRecentInvoices(){
+  const rows=await api('/api/invoices');
+  $('dash-invoices').innerHTML=rows.slice(0,8).map(r=>`<tr>
+    <td class="amount">${r.invoice_number}</td><td>${r.vendor_name}</td>
+    <td>${r.invoice_date}</td><td class="amount">${fmtM(r.total_amount)}</td>
+    <td class="amount">${fmtM(r.outstanding_amount)}</td>
+    <td>${statusBadge(r.status)}</td><td>${ageBadge(r.age_bucket)}</td>
+  </tr>`).join('');
+}
+
+// ── Vendor Risk ───────────────────────────────────────────────────────────────
+async function loadRisk(){
+  const data=await api('/api/analytics/vendor_risk');
+  const counts={Low:0,Medium:0,High:0,Critical:0};
+  data.forEach(r=>{ if(counts[r.risk_label]!==undefined) counts[r.risk_label]++; });
+
+  $('risk-kpis').innerHTML=`
+    <div class="kpi danger"><div class="kpi-label">Critical Risk</div><div class="kpi-value">${counts.Critical}</div><div class="kpi-sub">Immediate action needed</div></div>
+    <div class="kpi warn"><div class="kpi-label">High Risk</div><div class="kpi-value">${counts.High}</div><div class="kpi-sub">Escalate payment</div></div>
+    <div class="kpi"><div class="kpi-label">Medium Risk</div><div class="kpi-value">${counts.Medium}</div><div class="kpi-sub">Monitor closely</div></div>
+    <div class="kpi success"><div class="kpi-label">Low Risk</div><div class="kpi-value">${counts.Low}</div><div class="kpi-sub">Within control</div></div>
+  `;
+
+  let alerts='';
+  data.filter(r=>r.risk_label==='Critical'||r.risk_label==='High').forEach(r=>{
+    const cls=r.risk_label==='Critical'?'alert-critical':'alert-high';
+    const icon=r.risk_label==='Critical'?'🔴':'🟠';
+    alerts+=`<div class="alert-banner ${cls}"><span class="alert-icon">${icon}</span><div>
+      <strong>${r.vendor}</strong> — Risk Score: ${r.risk_score}/100 · ${r.risk_label} Risk<br>
+      Oldest invoice: ${r.oldest_invoice_age_days} days · Outstanding: ${fmtM(r.outstanding)} · Breach: ${Math.max(0,r.oldest_invoice_age_days-r.payment_terms)} days over terms
+    </div></div>`;
+  });
+  $('risk-alerts').innerHTML=alerts;
+
+  // Bar chart
+  destroyChart('risk-bar');
+  _charts['risk-bar']=new Chart($('chart-risk-bar'),{
+    type:'bar',
+    data:{labels:data.map(r=>r.vendor.length>18?r.vendor.substring(0,16)+'…':r.vendor),
+      datasets:[{label:'Risk Score',data:data.map(r=>r.risk_score),
+        backgroundColor:data.map(r=>r.risk_color==='critical'?'rgba(220,38,38,.8)':r.risk_color==='high'?'rgba(239,68,68,.7)':r.risk_color==='medium'?'rgba(245,158,11,.7)':'rgba(34,197,94,.7)'),
+        borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{x:{max:100,ticks:{color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
+              y:{ticks:{color:'#6b7a99'},grid:{display:false}}}}
+  });
+
+  // Pie
+  destroyChart('risk-pie');
+  _charts['risk-pie']=new Chart($('chart-risk-pie'),{
+    type:'doughnut',
+    data:{labels:['Low','Medium','High','Critical'],
+      datasets:[{data:[counts.Low,counts.Medium,counts.High,counts.Critical],
+        backgroundColor:['rgba(34,197,94,.8)','rgba(245,158,11,.8)','rgba(239,68,68,.8)','rgba(220,38,38,.9)'],
+        borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{legend:{position:'bottom',labels:{color:'#6b7a99',font:{size:11},boxWidth:12}}}}
+  });
+
+  // Risk rows
+  $('risk-rows').innerHTML=data.map(r=>`
+    <div class="risk-vendor-row">
+      <div class="risk-score-circle risk-${r.risk_color}">${r.risk_score}</div>
+      <div class="risk-bar-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="risk-vendor-name">${r.vendor} ${riskBadge(r.risk_label)}</div>
+            <div class="risk-vendor-meta">${r.open_invoices} open invoice(s) · Outstanding: ${fmtM(r.outstanding)} · Oldest: ${r.oldest_invoice_age_days} days · Terms: ${r.payment_terms} days · Breach: ${Math.max(0,r.oldest_invoice_age_days-r.payment_terms)} days</div>
+          </div>
+        </div>
+        <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:${r.risk_score}%;background:${r.risk_color==='critical'?'#dc2626':r.risk_color==='high'?'#ef4444':r.risk_color==='medium'?'#f59e0b':'#22c55e'}"></div></div>
+      </div>
     </div>`).join('');
 }
 
-async function loadRecentInvoices() {
-  const rows = await api('/api/invoices');
-  document.getElementById('dash-invoices').innerHTML = rows.slice(0,8).map(r=>`
-    <tr>
-      <td><span class="amount">${r.invoice_number}</span></td>
-      <td>${r.vendor_name}</td>
-      <td>${r.invoice_date}</td>
-      <td class="amount">${fmtMoney(r.total_amount)}</td>
-      <td class="amount">${fmtMoney(r.outstanding_amount)}</td>
-      <td>${statusBadge(r.status)}</td>
-      <td>${ageBadge(r.age_bucket)}</td>
-    </tr>`).join('');
-}
+// ── Cash Projection ───────────────────────────────────────────────────────────
+async function loadCashflow(){
+  const d=await api('/api/analytics/cash_projection');
+  const weeks=d.weeks||[];
+  const totalSched=weeks.reduce((s,w)=>s+w.scheduled,0);
+  const totalProj=weeks.reduce((s,w)=>s+w.projected,0);
 
-// ── VENDORS ───────────────────────────────────────────────────────────────────
-async function loadVendors() {
-  const search = document.getElementById('vendor-search').value;
-  const month  = document.getElementById('vendor-month-filter').value;
-  const rows = await api(`/api/vendors?search=${encodeURIComponent(search)}&month=${month}`);
-  document.getElementById('vendors-table').innerHTML = rows.length ? rows.map(r=>`
-    <tr>
-      <td><strong>${r.name}</strong></td>
-      <td>${r.category}</td>
-      <td>${payBadge(r.payment_method)}</td>
-      <td class="amount">${r.bank_account||'—'}</td>
-      <td class="amount">${r.ecocash_number||'—'}</td>
-      <td>${r.payment_terms} days</td>
-      <td>${fmtMonth(r.created_month)}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="openVendorDetail('${r.vendor_id}')">View</button></td>
-    </tr>`).join('') : `<tr><td colspan="8" class="empty">No vendors found</td></tr>`;
-}
+  $('proj-summary').innerHTML=`
+    <div class="proj-summary-card"><div class="proj-summary-label">Total 90-Day Requirement</div><div class="proj-summary-value" style="color:var(--accent)">${fmtM(d.total_90_days)}</div></div>
+    <div class="proj-summary-card"><div class="proj-summary-label">Firm Scheduled (Batches)</div><div class="proj-summary-value" style="color:var(--accent2)">${fmtM(totalSched)}</div></div>
+    <div class="proj-summary-card"><div class="proj-summary-label">Projected (Approved Payables)</div><div class="proj-summary-value" style="color:var(--warn)">${fmtM(totalProj)}</div></div>
+  `;
 
-function togglePayFields() {
-  const m = document.getElementById('v-paymethod').value;
-  document.getElementById('bank-fields').style.display = m==='Bank'||m==='Cheque' ? '' : 'none';
-  document.getElementById('eco-fields').style.display  = m==='EcoCash' ? '' : 'none';
-}
-
-async function submitVendor() {
-  const name = document.getElementById('v-name').value.trim();
-  if(!name){toast('Vendor name required','error');return;}
-  const r = await api('/api/vendors','POST',{
-    name, category:document.getElementById('v-cat').value,
-    payment_terms:parseInt(document.getElementById('v-terms').value)||30,
-    payment_method:document.getElementById('v-paymethod').value,
-    bank_name:document.getElementById('v-bank').value,
-    bank_account:document.getElementById('v-account').value,
-    ecocash_number:document.getElementById('v-ecocash').value,
+  destroyChart('cashflow');
+  _charts['cashflow']=new Chart($('chart-cashflow'),{
+    type:'bar',
+    data:{labels:weeks.map(w=>w.label),
+      datasets:[
+        {label:'Firm Scheduled',data:weeks.map(w=>w.scheduled),backgroundColor:'rgba(34,211,165,.7)',borderRadius:3,stack:'s'},
+        {label:'Projected Payables',data:weeks.map(w=>w.projected),backgroundColor:'rgba(245,158,11,.6)',borderRadius:3,stack:'s'},
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#6b7a99',font:{size:11}}}},
+      scales:{y:{stacked:true,ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k',color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
+              x:{stacked:true,ticks:{color:'#6b7a99'},grid:{display:false}}}}
   });
+
+  destroyChart('cumulative');
+  _charts['cumulative']=new Chart($('chart-cumulative'),{
+    type:'line',
+    data:{labels:weeks.map(w=>w.label),
+      datasets:[{label:'Cumulative Cash Required',data:weeks.map(w=>w.cumulative),
+        borderColor:'#4f8ef7',backgroundColor:'rgba(79,142,247,.08)',fill:true,tension:0.3,pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#6b7a99',font:{size:11}}}},
+      scales:{y:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k',color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
+              x:{ticks:{color:'#6b7a99'},grid:{display:false}}}}
+  });
+
+  $('proj-weeks').innerHTML=weeks.slice(0,13).map(w=>`
+    <div class="proj-week">
+      <div class="proj-week-label">Wk ${w.week} · ${w.label}</div>
+      <div class="proj-week-total">${fmtM(w.total)}</div>
+      <div class="proj-week-sched">Sched: ${fmtM(w.scheduled)}</div>
+      <div class="proj-week-proj">Proj: ${fmtM(w.projected)}</div>
+    </div>`).join('');
+}
+
+// ── Working Capital ───────────────────────────────────────────────────────────
+async function loadWorkingCapital(){
+  const [wc,cc]=await Promise.all([api('/api/analytics/working_capital'),api('/api/analytics/cost_centre_breakdown')]);
+
+  $('wc-metrics').innerHTML=`
+    <div class="wc-metric"><div class="wc-value">${wc.dpo}</div><div class="wc-label">DPO (Days)</div><div class="wc-hint">Days Payable Outstanding</div></div>
+    <div class="wc-metric"><div class="wc-value">${wc.ap_turnover}x</div><div class="wc-label">AP Turnover</div><div class="wc-hint">Purchases ÷ AP balance</div></div>
+    <div class="wc-metric"><div class="wc-value">${wc.avg_approval_cycle_days}</div><div class="wc-label">Avg Approval Days</div><div class="wc-hint">Draft → Approved cycle</div></div>
+    <div class="wc-metric"><div class="wc-value">${fmtM(wc.total_ap)}</div><div class="wc-label">Total AP Balance</div><div class="wc-hint">Accounts payable</div></div>
+    <div class="wc-metric"><div class="wc-value">${fmtM(wc.total_paid)}</div><div class="wc-label">Total Paid</div><div class="wc-hint">All-time payments recorded</div></div>
+    <div class="wc-metric"><div class="wc-value">${fmtM(wc.total_purchases)}</div><div class="wc-label">Total Purchases</div><div class="wc-hint">All invoices excl. rejected</div></div>
+  `;
+
+  const trend=wc.payment_velocity_trend||[];
+  destroyChart('velocity');
+  _charts['velocity']=new Chart($('chart-velocity'),{
+    type:'bar',
+    data:{labels:trend.map(t=>fmtMonth(t.month).replace(' ','\n')),
+      datasets:[
+        {label:'Invoiced',data:trend.map(t=>t.invoiced),backgroundColor:'rgba(79,142,247,.5)',borderRadius:3},
+        {label:'Paid',data:trend.map(t=>t.paid),backgroundColor:'rgba(34,211,165,.7)',borderRadius:3},
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#6b7a99',font:{size:10}}}},
+      scales:{y:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k',color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
+              x:{ticks:{color:'#6b7a99',font:{size:10}},grid:{display:false}}}}
+  });
+
+  // Cost centre chart
+  destroyChart('cc');
+  _charts['cc']=new Chart($('chart-cc'),{
+    type:'doughnut',
+    data:{labels:cc.map(r=>`CC-${r.cost_centre_number} ${r.cost_centre_name||''}`),
+      datasets:[{data:cc.map(r=>r.outstanding),
+        backgroundColor:['rgba(79,142,247,.8)','rgba(34,211,165,.8)','rgba(245,158,11,.8)','rgba(167,139,250,.8)','rgba(251,146,60,.8)'],
+        borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{legend:{position:'bottom',labels:{color:'#6b7a99',font:{size:10},boxWidth:10}}}}
+  });
+
+  $('cc-table').innerHTML=cc.length?cc.map(r=>`<tr>
+    <td class="amount">${r.cost_centre_number}</td>
+    <td>${r.cost_centre_name||'—'}</td>
+    <td>${r.invoice_count}</td>
+    <td class="amount">${fmtM(r.total_invoiced)}</td>
+    <td class="amount"><strong>${fmtM(r.outstanding)}</strong></td>
+  </tr>`).join(''):`<tr><td colspan="5" class="empty">No data</td></tr>`;
+}
+
+// ── Payment Performance ───────────────────────────────────────────────────────
+async function loadPerformance(){
+  const d=await api('/api/analytics/payment_performance');
+
+  $('perf-kpis').innerHTML=`
+    <div class="kpi success"><div class="kpi-label">On-Time Payments</div><div class="kpi-value">${d.on_time}</div><div class="kpi-sub">${d.on_time_pct}% of all payments</div></div>
+    <div class="kpi danger"><div class="kpi-label">Late Payments</div><div class="kpi-value">${d.late}</div><div class="kpi-sub">${100-d.on_time_pct}% of all payments</div></div>
+    <div class="kpi warn"><div class="kpi-label">Avg Delay Days</div><div class="kpi-value">${d.avg_delay_days}</div><div class="kpi-sub">For late payments only</div></div>
+    <div class="kpi"><div class="kpi-label">Total Payments</div><div class="kpi-value">${d.total}</div></div>
+  `;
+
+  destroyChart('perf-pie');
+  _charts['perf-pie']=new Chart($('chart-perf-pie'),{
+    type:'doughnut',
+    data:{labels:['On Time','Late'],datasets:[{data:[d.on_time,d.late],backgroundColor:['rgba(34,197,94,.8)','rgba(239,68,68,.8)'],borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{color:'#6b7a99',font:{size:12},boxWidth:14}}}}
+  });
+
+  $('perf-worst').innerHTML=(d.worst_vendors||[]).length?(d.worst_vendors||[]).map(v=>`<tr><td>${v.vendor}</td><td style="color:var(--danger);font-family:var(--mono)">${v.late_count}</td></tr>`).join(''):`<tr><td colspan="2" class="empty">No late payments recorded</td></tr>`;
+}
+
+// ── Vendors ───────────────────────────────────────────────────────────────────
+async function loadVendors(){
+  const s=$('v-search').value, m=$('v-month').value;
+  const rows=await api(`/api/vendors?search=${encodeURIComponent(s)}&month=${m}`);
+  $('vendors-tbl').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td><strong>${r.name}</strong></td><td>${r.category}</td>
+    <td>${payBadge(r.payment_method)}</td>
+    <td class="amount">${r.bank_account||'—'}</td>
+    <td class="amount">${r.ecocash_number||'—'}</td>
+    <td>${r.payment_terms} days</td>
+    <td style="font-size:11px;color:var(--muted)">${fmtMonth(r.created_month)}</td>
+    <td><button class="btn btn-ghost btn-sm" onclick="openVendorDetail('${r.vendor_id}')">View</button></td>
+  </tr>`).join(''):`<tr><td colspan="8" class="empty">No vendors found</td></tr>`;
+}
+
+function togglePayFields(){
+  const m=$('vn-method').value;
+  $('bank-fields').style.display=(m==='Bank'||m==='Cheque')?'':'none';
+  $('eco-fields').style.display=(m==='EcoCash')?'':'none';
+}
+
+async function submitVendor(){
+  const name=$('vn-name').value.trim();
+  if(!name){toast('Vendor name required','error');return;}
+  const r=await api('/api/vendors','POST',{name,category:$('vn-cat').value,payment_terms:parseInt($('vn-terms').value)||30,payment_method:$('vn-method').value,bank_name:$('vn-bank')?.value,bank_account:$('vn-acc')?.value,ecocash_number:$('vn-eco')?.value});
   if(r.ok){toast('Vendor added');closeModal('modal-vendor');loadVendors();populateVendorSelects();populateMonthFilters();}
   else toast(r.error,'error');
 }
 
-async function openVendorDetail(vid) {
-  const d = await api(`/api/vendors/${vid}`);
-  const acct = d.bank_account ? `<div class="vd-item"><div class="dl">Bank Account</div><div class="dv">${d.bank_account}</div></div>` : '';
-  const eco  = d.ecocash_number ? `<div class="vd-item"><div class="dl">EcoCash</div><div class="dv">${d.ecocash_number}</div></div>` : '';
-  document.getElementById('vendor-detail-content').innerHTML = `
+async function populateVendorSelects(){
+  const vs=await api('/api/vendors');
+  $('in-vendor').innerHTML=vs.map(v=>`<option value="${v.vendor_id}">${v.name}</option>`).join('');
+}
+
+async function openVendorDetail(vid){
+  const d=await api(`/api/vendors/${vid}`);
+  $('vd-content').innerHTML=`
     <div class="vd-panel">
       <div class="vd-header">
         <div class="vd-avatar">${d.name[0]}</div>
-        <div><div class="vd-name">${d.name}</div><div class="vd-meta">${d.category} · ${payBadge(d.payment_method)} · ${d.payment_terms} day terms</div></div>
+        <div><div class="vd-name">${d.name}</div><div class="vd-meta">${d.category} · ${payBadge(d.payment_method)} · ${d.payment_terms}-day terms</div></div>
       </div>
       <div class="vd-grid">
-        ${acct}${eco}
-        <div class="vd-item"><div class="dl">Total Outstanding</div><div class="dv" style="color:var(--accent)">${fmtMoney(d.total_outstanding)}</div></div>
+        ${d.bank_account?`<div class="vd-item"><div class="dl">Bank Account</div><div class="dv">${d.bank_account}</div></div>`:''}
+        ${d.ecocash_number?`<div class="vd-item"><div class="dl">EcoCash</div><div class="dv">${d.ecocash_number}</div></div>`:''}
         <div class="vd-item"><div class="dl">Bank Name</div><div class="dv">${d.bank_name||'—'}</div></div>
+        <div class="vd-item"><div class="dl">Outstanding</div><div class="dv" style="color:var(--accent)">${fmtM(d.total_outstanding)}</div></div>
         <div class="vd-item"><div class="dl">Month Added</div><div class="dv">${fmtMonth(d.created_month)}</div></div>
       </div>
     </div>
-    <div class="table-title" style="margin-bottom:10px">Invoices (${d.invoices.length})</div>
     <div class="table-scroll"><table><thead><tr><th>Invoice #</th><th>Date</th><th>Amount</th><th>Outstanding</th><th>Status</th></tr></thead>
-    <tbody>${(d.invoices||[]).map(i=>`<tr><td>${i.invoice_number}</td><td>${i.invoice_date}</td><td class="amount">${fmtMoney(i.total_amount)}</td><td class="amount">${fmtMoney(i.outstanding_amount)}</td><td>${statusBadge(i.status)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">No invoices</td></tr>'}</tbody></table></div>`;
+    <tbody>${(d.invoices||[]).map(i=>`<tr><td>${i.invoice_number}</td><td>${i.invoice_date}</td><td class="amount">${fmtM(i.total_amount)}</td><td class="amount">${fmtM(i.outstanding_amount)}</td><td>${statusBadge(i.status)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">No invoices</td></tr>'}</tbody></table></div>`;
   openModal('modal-vendor-detail');
 }
 
-async function populateVendorSelects() {
-  const vendors = await api('/api/vendors');
-  document.getElementById('i-vendor').innerHTML = vendors.map(v=>`<option value="${v.vendor_id}">${v.name}</option>`).join('');
+// ── Invoices ──────────────────────────────────────────────────────────────────
+async function loadInvoices(){
+  const rows=await api(`/api/invoices?status=${$('i-status').value}&month=${$('i-month').value}&search=${encodeURIComponent($('i-search').value)}`);
+  $('invoices-tbl').innerHTML=rows.length?rows.map(r=>{
+    const canSubmit=r.status==='Draft', canVerify=r.status==='Submitted', canApprove=r.status==='Verified';
+    const canReject=['Submitted','Verified'].includes(r.status), canPay=['Approved','Scheduled','Partially Paid'].includes(r.status), canSched=r.status==='Approved';
+    return `<tr>
+      <td class="amount">${r.invoice_number}</td><td>${r.vendor_name}</td>
+      <td style="font-size:11px;color:var(--muted)">${r.month_label||''}</td>
+      <td class="amount">${r.cost_centre_number||'—'}</td>
+      <td class="amount">${fmtM(r.total_amount)}</td><td class="amount">${fmtM(r.outstanding_amount)}</td>
+      <td>${statusBadge(r.status)}</td><td>${ageBadge(r.age_bucket)}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        ${canSubmit?`<button class="btn btn-ghost btn-sm" onclick="openWf('${r.invoice_id}','submit','Submit')">Submit</button>`:''}
+        ${canVerify?`<button class="btn btn-ghost btn-sm" onclick="openWf('${r.invoice_id}','verify','Verify')">Verify</button>`:''}
+        ${canApprove?`<button class="btn btn-success btn-sm" onclick="openWf('${r.invoice_id}','approve','Approve')">Approve</button>`:''}
+        ${canReject?`<button class="btn btn-danger btn-sm" onclick="openWf('${r.invoice_id}','reject','Reject')">Reject</button>`:''}
+        ${canSched?`<button class="btn btn-ghost btn-sm" onclick="openAddBatch('${r.invoice_id}','${r.outstanding_amount}','${r.invoice_number}')">Schedule</button>`:''}
+        ${canPay?`<button class="btn btn-primary btn-sm" onclick="openPay('${r.invoice_id}','${r.outstanding_amount}','${r.invoice_number}','${r.vendor_pay_method||'Bank'}')">Pay</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="openAudit('${r.invoice_id}','${r.invoice_number}')">Log</button>
+      </td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="9" class="empty">No invoices found</td></tr>`;
 }
 
-// ── INVOICES ──────────────────────────────────────────────────────────────────
-async function loadInvoices() {
-  const status = document.getElementById('inv-filter-status').value;
-  const month  = document.getElementById('inv-filter-month').value;
-  const search = document.getElementById('inv-search').value;
-  const rows = await api(`/api/invoices?status=${encodeURIComponent(status)}&month=${month}&search=${encodeURIComponent(search)}`);
-  document.getElementById('invoices-table').innerHTML = rows.length ? rows.map(r=>invoiceRow(r)).join('') : `<tr><td colspan="9" class="empty">No invoices found</td></tr>`;
-}
-
-function invoiceRow(r) {
-  const canSubmit  = r.status==='Draft';
-  const canVerify  = r.status==='Submitted';
-  const canApprove = r.status==='Verified';
-  const canReject  = ['Submitted','Verified'].includes(r.status);
-  const canPay     = ['Approved','Scheduled','Partially Paid'].includes(r.status);
-  const canSched   = r.status==='Approved';
-  return `<tr>
-    <td><span class="amount">${r.invoice_number}</span></td>
-    <td>${r.vendor_name}</td>
-    <td style="font-size:11px;color:var(--muted)">${r.month_label||''}</td>
-    <td><span class="amount">${r.cost_centre_number||'—'}</span></td>
-    <td class="amount">${fmtMoney(r.total_amount)}</td>
-    <td class="amount">${fmtMoney(r.outstanding_amount)}</td>
-    <td>${statusBadge(r.status)}</td>
-    <td>${ageBadge(r.age_bucket)}</td>
-    <td><div class="actions">
-      ${canSubmit ?`<button class="btn btn-ghost btn-sm" onclick="openWorkflow('${r.invoice_id}','submit','Submit for Verification')">Submit</button>`:''}
-      ${canVerify ?`<button class="btn btn-ghost btn-sm" onclick="openWorkflow('${r.invoice_id}','verify','Verify Invoice')">Verify</button>`:''}
-      ${canApprove?`<button class="btn btn-success btn-sm" onclick="openWorkflow('${r.invoice_id}','approve','Approve for Payment')">Approve</button>`:''}
-      ${canReject ?`<button class="btn btn-danger btn-sm" onclick="openWorkflow('${r.invoice_id}','reject','Reject Invoice')">Reject</button>`:''}
-      ${canSched  ?`<button class="btn btn-ghost btn-sm" onclick="openAddBatch('${r.invoice_id}','${r.outstanding_amount}','${r.invoice_number}')">Schedule</button>`:''}
-      ${canPay    ?`<button class="btn btn-primary btn-sm" onclick="openPayment('${r.invoice_id}','${r.outstanding_amount}','${r.invoice_number}','${r.vendor_pay_method||'Bank'}')">Pay</button>`:''}
-      <button class="btn btn-ghost btn-sm" onclick="openAudit('${r.invoice_id}','${r.invoice_number}')">Log</button>
-    </div></td>
-  </tr>`;
-}
-
-async function submitInvoice() {
-  const num=document.getElementById('i-num').value.trim();
-  const vid=document.getElementById('i-vendor').value;
-  const idate=document.getElementById('i-date').value;
-  const desc=document.getElementById('i-desc').value.trim();
-  const amount=parseFloat(document.getElementById('i-amount').value);
-  const by=document.getElementById('i-by').value.trim();
+async function submitInvoice(){
+  const num=$('in-num').value.trim(),vid=$('in-vendor').value,idate=$('in-date').value,desc=$('in-desc').value.trim(),amount=parseFloat($('in-amt').value),by=$('in-by').value.trim();
   if(!num||!vid||!idate||!desc||!amount||!by){toast('Fill all required fields','error');return;}
-  const r = await api('/api/invoices','POST',{
-    invoice_number:num,vendor_id:vid,invoice_date:idate,
-    due_date:document.getElementById('i-due').value||null,
-    description:desc,total_amount:amount,
-    cost_centre_number:document.getElementById('i-ccnum').value||null,
-    cost_centre_name:document.getElementById('i-ccname').value,
-    doc_reference:document.getElementById('i-doc').value,
-    created_by:by,
-  });
-  if(r.ok){toast('Invoice created');closeModal('modal-invoice');loadInvoices();loadDashboard();populateMonthFilters();}
+  const r=await api('/api/invoices','POST',{invoice_number:num,vendor_id:vid,invoice_date:idate,due_date:$('in-due').value||null,description:desc,total_amount:amount,cost_centre_number:$('in-ccn').value||null,cost_centre_name:$('in-ccname').value,doc_reference:$('in-doc').value,created_by:by});
+  if(r.ok){toast('Invoice created');closeModal('modal-invoice');loadInvoices();populateMonthFilters();}
   else toast(r.error,'error');
 }
 
-// ── WORKFLOW ──────────────────────────────────────────────────────────────────
-function openWorkflow(id,action,label) {
-  currentInvoiceId=id; currentWorkflowAction=action;
-  document.getElementById('wf-title').textContent=label;
-  document.getElementById('wf-sub').textContent=`Invoice: ${id.substring(0,8)}…`;
-  document.getElementById('wf-notes-label').textContent=action==='reject'?'Rejection Reason *':'Notes (optional)';
-  document.getElementById('wf-notes').value='';
-  openModal('modal-workflow');
+// ── Workflow ──────────────────────────────────────────────────────────────────
+function openWf(id,action,label){
+  _wfInvoiceId=id; _wfAction=action;
+  $('wf-title').textContent=label+' Invoice';
+  $('wf-sub').textContent='Invoice: '+id.substring(0,8)+'…';
+  $('wf-notes-lbl').textContent=action==='reject'?'Rejection Reason *':'Notes (optional)';
+  $('wf-notes').value=''; openModal('modal-workflow');
 }
-
-async function submitWorkflow() {
-  const r = await api(`/api/invoices/${currentInvoiceId}/workflow`,'POST',{
-    action:currentWorkflowAction,
-    performed_by:document.getElementById('wf-by').value||'system',
-    notes:document.getElementById('wf-notes').value,
-  });
-  if(r.ok){toast(`Status → ${r.new_status}`);closeModal('modal-workflow');loadInvoices();loadDashboard();}
+async function submitWorkflow(){
+  const r=await api(`/api/invoices/${_wfInvoiceId}/workflow`,'POST',{action:_wfAction,performed_by:$('wf-by').value||'system',notes:$('wf-notes').value});
+  if(r.ok){toast(`Status → ${r.new_status}`);closeModal('modal-workflow');loadInvoices();}
   else toast(r.error,'error');
 }
 
-// ── PAYMENT ───────────────────────────────────────────────────────────────────
-function openPayment(id,outstanding,invNo,payMethod) {
-  currentPayInvoice=id; currentPayOutstanding=parseFloat(outstanding);
-  document.getElementById('pay-sub').textContent=`Invoice: ${invNo} — Outstanding: ${fmtMoney(outstanding)}`;
-  document.getElementById('pay-amount').value=outstanding;
-  document.getElementById('pay-date').value=new Date().toISOString().split('T')[0];
-  const sel=document.getElementById('pay-method');
-  for(let o of sel.options){if(o.value===payMethod){o.selected=true;break;}}
+// ── Payment ───────────────────────────────────────────────────────────────────
+function openPay(id,outstanding,invNo,payMethod){
+  _payInvoiceId=id; _payMax=parseFloat(outstanding);
+  $('pay-sub').textContent=`Invoice: ${invNo} · Outstanding: ${fmtM(outstanding)}`;
+  $('pay-amt').value=outstanding; $('pay-date').value=today();
+  for(let o of $('pay-method').options){if(o.value===payMethod){o.selected=true;break;}}
   openModal('modal-payment');
 }
-
-async function submitPayment() {
-  const amount=parseFloat(document.getElementById('pay-amount').value);
-  const date=document.getElementById('pay-date').value;
-  const by=document.getElementById('pay-by').value.trim();
-  if(!amount||!date||!by){toast('Fill all required fields','error');return;}
-  if(amount>currentPayOutstanding){toast('Amount exceeds outstanding balance','error');return;}
-  const r = await api('/api/payments','POST',{
-    invoice_id:currentPayInvoice,payment_date:date,amount_paid:amount,
-    payment_method:document.getElementById('pay-method').value,
-    bank_reference:document.getElementById('pay-ref').value,
-    recorded_by:by,
-  });
-  if(r.ok){toast(`Payment recorded — ${r.new_status}`);closeModal('modal-payment');loadInvoices();loadDashboard();}
+async function submitPayment(){
+  const amount=parseFloat($('pay-amt').value),dt=$('pay-date').value,by=$('pay-by').value.trim();
+  if(!amount||!dt||!by){toast('Fill all required fields','error');return;}
+  if(amount>_payMax){toast('Amount exceeds outstanding balance','error');return;}
+  const r=await api('/api/payments','POST',{invoice_id:_payInvoiceId,payment_date:dt,amount_paid:amount,payment_method:$('pay-method').value,bank_reference:$('pay-ref').value,recorded_by:by});
+  if(r.ok){toast(`Payment recorded — ${r.new_status}`);closeModal('modal-payment');loadInvoices();}
   else toast(r.error,'error');
 }
 
-// ── BATCHES ───────────────────────────────────────────────────────────────────
-let batchLineInvoices = []; // populated when modal opens
-
-async function openCreateBatch() {
-  // load approved invoices for the line selector
-  const allInv = await api('/api/invoices');
-  batchLineInvoices = allInv.filter(i => ['Approved'].includes(i.status));
-  document.getElementById('batch-lines-wrap').innerHTML = '';
-  document.getElementById('batch-lines-total').textContent = '';
-  document.getElementById('b-ref').value = '';
-  document.getElementById('b-date').value = '';
-  document.getElementById('b-notes').value = '';
-  openModal('modal-batch');
+// ── Batches ───────────────────────────────────────────────────────────────────
+async function loadBatches(){
+  const rows=await api('/api/batches');
+  $('batches-tbl').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td><strong>${r.batch_reference}</strong></td><td>${r.scheduled_date}</td>
+    <td>${r.invoice_count}</td><td>${r.vendor_count} vendor(s)</td>
+    <td class="amount">${fmtM(r.total_scheduled)}</td><td>${r.created_by}</td>
+    <td><button class="btn btn-ghost btn-sm" onclick="viewBatchItems('${r.batch_id}','${r.batch_reference}')">View</button></td>
+  </tr>`).join(''):`<tr><td colspan="7" class="empty">No batches yet</td></tr>`;
 }
 
-function addBatchLine() {
-  const wrap = document.getElementById('batch-lines-wrap');
-  const idx = wrap.children.length;
-  const opts = batchLineInvoices.length
-    ? batchLineInvoices.map(i => `<option value="${i.invoice_id}" data-out="${i.outstanding_amount}">${i.invoice_number} — ${i.vendor_name} (${fmtMoney(i.outstanding_amount)})</option>`).join('')
-    : '<option disabled>No approved invoices available</option>';
-  const row = document.createElement('div');
-  row.style.cssText = 'display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px';
-  row.innerHTML = `
-    <select class="bl-inv" onchange="onBatchLineInvChange(this)" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:12px;font-family:var(--font);outline:none">${opts}</select>
-    <input class="bl-amt" type="number" step="0.01" placeholder="Amount" oninput="updateBatchTotal()"
-      style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:12px;font-family:var(--mono);width:120px;outline:none">
-    <button onclick="this.parentElement.remove();updateBatchTotal()" style="background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
-  `;
-  wrap.appendChild(row);
-  // pre-fill amount from first invoice
-  const sel = row.querySelector('.bl-inv');
-  const amtInput = row.querySelector('.bl-amt');
-  if(sel.options.length && !sel.options[0].disabled) {
-    amtInput.value = sel.options[0].dataset.out || '';
-  }
-  updateBatchTotal();
-}
-
-function onBatchLineInvChange(sel) {
-  const amt = sel.closest('div').querySelector('.bl-amt');
-  const opt = sel.options[sel.selectedIndex];
-  if(opt && opt.dataset.out) amt.value = opt.dataset.out;
-  updateBatchTotal();
-}
-
-function updateBatchTotal() {
-  const rows = document.querySelectorAll('#batch-lines-wrap > div');
-  let total = 0;
-  rows.forEach(r => { const v = parseFloat(r.querySelector('.bl-amt').value); if(!isNaN(v)) total += v; });
-  document.getElementById('batch-lines-total').textContent = rows.length ? `Batch Total: ${fmtMoney(total)}` : '';
-}
-
-async function submitBatch() {
-  const ref   = document.getElementById('b-ref').value.trim();
-  const sdate = document.getElementById('b-date').value;
-  const by    = document.getElementById('b-by').value.trim();
-  if(!ref||!sdate||!by){toast('Fill all required fields','error');return;}
-
-  // collect lines
-  const lines = [];
-  let lineErr = false;
-  document.querySelectorAll('#batch-lines-wrap > div').forEach(row => {
-    const invSel = row.querySelector('.bl-inv');
-    const amtInp = row.querySelector('.bl-amt');
-    const inv_id = invSel.value;
-    const amount = parseFloat(amtInp.value);
-    if(!inv_id || isNaN(amount) || amount <= 0) { lineErr = true; return; }
-    lines.push({ invoice_id: inv_id, scheduled_amount: amount });
-  });
-  if(lineErr){toast('Each invoice line needs a valid amount','error');return;}
-
-  const r = await api('/api/batches','POST',{
-    batch_reference: ref, scheduled_date: sdate,
-    notes: document.getElementById('b-notes').value,
-    created_by: by,
-    items: lines
-  });
-  if(r.ok){
-    toast(`Batch created${lines.length ? ` with ${lines.length} invoice(s)`:''}`);
-    closeModal('modal-batch');
-    loadBatches();
-  } else toast(r.error,'error');
-}
-
-async function loadBatches() {
-  const rows = await api('/api/batches');
-  document.getElementById('batches-table').innerHTML = rows.length ? rows.map(r=>`
-    <tr>
-      <td><strong>${r.batch_reference}</strong></td>
-      <td>${r.scheduled_date}</td>
-      <td>${r.invoice_count}</td>
-      <td>${r.vendor_count} vendor${r.vendor_count!==1?'s':''}</td>
-      <td class="amount">${fmtMoney(r.total_scheduled)}</td>
-      <td>${r.created_by}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="viewBatchItems('${r.batch_id}','${r.batch_reference}')">View Items</button></td>
-    </tr>`).join('') : `<tr><td colspan="7" class="empty">No batches yet</td></tr>`;
-}
-
-async function viewBatchItems(bid,bref) {
-  const items = await api(`/api/batches/${bid}/items`);
-  document.getElementById('bi-title').textContent = `Batch: ${bref}`;
-  document.getElementById('bi-sub').textContent = `${items.length} invoice(s) across multiple vendors`;
-  document.getElementById('bi-table').innerHTML = items.length ? items.map(i=>`
-    <tr>
-      <td>${i.vendor_name}</td>
-      <td>${i.invoice_number}</td>
-      <td>${payBadge(i.payment_method)}</td>
-      <td class="amount">${i.bank_account||i.ecocash_number||'—'}</td>
-      <td class="amount">${fmtMoney(i.scheduled_amount)}</td>
-      <td>${statusBadge(i.status)}</td>
-    </tr>`).join('') : `<tr><td colspan="6" class="empty">No items</td></tr>`;
+async function viewBatchItems(bid,bref){
+  const items=await api(`/api/batches/${bid}/items`);
+  $('bi-title').textContent=`Batch: ${bref}`; $('bi-sub').textContent=`${items.length} invoice(s)`;
+  $('bi-tbl').innerHTML=items.length?items.map(i=>`<tr><td>${i.vendor_name}</td><td>${i.invoice_number}</td><td>${payBadge(i.payment_method)}</td><td class="amount">${i.bank_account||i.ecocash_number||'—'}</td><td class="amount">${fmtM(i.scheduled_amount)}</td><td>${statusBadge(i.status)}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">No items</td></tr>`;
   openModal('modal-batch-items');
 }
 
-async function openAddBatch(invoiceId,outstanding,invNo) {
-  currentAddBatchInvoice=invoiceId;
-  document.getElementById('addbatch-sub').textContent=`Invoice: ${invNo} — Outstanding: ${fmtMoney(outstanding)}`;
-  document.getElementById('addbatch-amount').value=outstanding;
-  const batches = await api('/api/batches');
-  document.getElementById('addbatch-bid').innerHTML = batches.length
-    ? batches.map(b=>`<option value="${b.batch_id}">${b.batch_reference} (${b.scheduled_date})</option>`).join('')
-    : '<option disabled>No batches — create one first</option>';
-  openModal('modal-add-batch');
-}
-
-async function submitAddBatch() {
-  const bid=document.getElementById('addbatch-bid').value;
-  const amount=parseFloat(document.getElementById('addbatch-amount').value);
-  const by=document.getElementById('addbatch-by').value.trim();
-  if(!bid||!amount||!by){toast('Fill all required fields','error');return;}
-  const r = await api(`/api/batches/${bid}/items`,'POST',{invoice_id:currentAddBatchInvoice,scheduled_amount:amount,added_by:by});
-  if(r.ok){toast('Invoice scheduled in batch');closeModal('modal-add-batch');loadInvoices();loadBatches();}
+async function submitBatch(){
+  const ref=$('b-ref').value.trim(),sdate=$('b-date').value,by=$('b-by').value.trim();
+  if(!ref||!sdate||!by){toast('Fill all required fields','error');return;}
+  const r=await api('/api/batches','POST',{batch_reference:ref,scheduled_date:sdate,notes:$('b-notes').value,created_by:by});
+  if(r.ok){toast('Batch created');closeModal('modal-batch');loadBatches();}
   else toast(r.error,'error');
 }
 
-// ── REPORTS ───────────────────────────────────────────────────────────────────
-async function loadOutstanding() {
-  const month=document.getElementById('out-month').value;
-  const rows = await api(`/api/reports/outstanding?month=${month}`);
-  const total = rows.reduce((s,r)=>s+r.total_outstanding,0);
-  document.getElementById('outstanding-table').innerHTML = rows.length ? rows.map(r=>`
-    <tr>
-      <td><strong>${r.vendor}</strong></td>
-      <td>${r.category}</td>
-      <td>${payBadge(r.payment_method)}</td>
-      <td class="amount">${r.bank_account||r.ecocash_number||'—'}</td>
-      <td>${r.invoice_count}</td>
-      <td class="amount"><strong>${fmtMoney(r.total_outstanding)}</strong></td>
-    </tr>`).join('') : `<tr><td colspan="6" class="empty">No outstanding invoices</td></tr>`;
-  document.getElementById('outstanding-footer').innerHTML =
-    `<td colspan="5" style="font-weight:600;padding:10px 14px">Grand Total</td>
-     <td class="amount" style="font-weight:600;padding:10px 14px">${fmtMoney(total)}</td>`;
+async function openAddBatch(invoiceId,outstanding,invNo){
+  _abInvoiceId=invoiceId;
+  $('ab-sub').textContent=`Invoice: ${invNo} · Outstanding: ${fmtM(outstanding)}`;
+  $('ab-amt').value=outstanding;
+  const batches=await api('/api/batches');
+  $('ab-bid').innerHTML=batches.length?batches.map(b=>`<option value="${b.batch_id}">${b.batch_reference} (${b.scheduled_date})</option>`).join(''):'<option disabled>No batches — create one first</option>';
+  openModal('modal-add-batch');
+}
+async function submitAddBatch(){
+  const bid=$('ab-bid').value,amount=parseFloat($('ab-amt').value),by=$('ab-by').value.trim();
+  if(!bid||!amount||!by){toast('Fill all required fields','error');return;}
+  const r=await api(`/api/batches/${bid}/items`,'POST',{invoice_id:_abInvoiceId,scheduled_amount:amount,added_by:by});
+  if(r.ok){toast('Invoice scheduled');closeModal('modal-add-batch');loadInvoices();loadBatches();}
+  else toast(r.error,'error');
 }
 
-async function loadAging() {
-  const month=document.getElementById('age-month').value;
-  const d = await api(`/api/reports/aging?month=${month}`);
+// ── Reports ───────────────────────────────────────────────────────────────────
+async function loadOutstanding(){
+  const rows=await api(`/api/reports/outstanding?month=${$('out-month').value}`);
+  const total=rows.reduce((s,r)=>s+r.total_outstanding,0);
+  $('out-tbl').innerHTML=rows.length?rows.map(r=>`<tr><td><strong>${r.vendor}</strong></td><td>${r.category}</td><td>${payBadge(r.payment_method)}</td><td class="amount">${r.bank_account||r.ecocash_number||'—'}</td><td>${r.invoice_count}</td><td class="amount"><strong>${fmtM(r.total_outstanding)}</strong></td></tr>`).join(''):`<tr><td colspan="6" class="empty">No outstanding</td></tr>`;
+  $('out-foot').innerHTML=`<td colspan="5" style="font-weight:600;padding:10px 14px">Grand Total</td><td class="amount" style="font-weight:600;padding:10px 14px">${fmtM(total)}</td>`;
+}
+
+async function loadAging(){
+  const d=await api(`/api/reports/aging?month=${$('age-month').value}`);
   const buckets=['0-30 days','31-60 days','61-90 days','91+ days'];
-  document.getElementById('aging-table').innerHTML = (d.vendors||[]).length
-    ? (d.vendors||[]).map(r=>`<tr><td><strong>${r.vendor}</strong></td>${buckets.map(b=>`<td class="amount">${fmtMoney(r[b]||0)}</td>`).join('')}<td class="amount"><strong>${fmtMoney(r.total)}</strong></td></tr>`).join('')
-    : `<tr><td colspan="6" class="empty">No data</td></tr>`;
+  $('aging-tbl').innerHTML=(d.vendors||[]).length?(d.vendors||[]).map(r=>`<tr><td><strong>${r.vendor}</strong></td>${buckets.map(b=>`<td class="amount">${fmtM(r[b]||0)}</td>`).join('')}<td class="amount"><strong>${fmtM(r.total)}</strong></td></tr>`).join(''):`<tr><td colspan="6" class="empty">No data</td></tr>`;
   const t=d.totals||{};
-  document.getElementById('aging-footer').innerHTML =
-    `<td style="font-weight:600;padding:10px 14px">Total</td>${buckets.map(b=>`<td class="amount" style="font-weight:600;padding:10px 14px">${fmtMoney(t[b]||0)}</td>`).join('')}<td class="amount" style="font-weight:600;padding:10px 14px">${fmtMoney(d.grand_total||0)}</td>`;
+  $('aging-foot').innerHTML=`<td style="font-weight:600;padding:9px 14px">Total</td>${buckets.map(b=>`<td class="amount" style="font-weight:600;padding:9px 14px">${fmtM(t[b]||0)}</td>`).join('')}<td class="amount" style="font-weight:600;padding:9px 14px">${fmtM(d.grand_total||0)}</td>`;
 }
 
-async function loadBacklog() {
-  const month=document.getElementById('backlog-month').value;
-  const rows = await api(`/api/reports/backlog?month=${month}`);
-  document.getElementById('backlog-table').innerHTML = rows.length ? rows.map(r=>`
-    <tr>
-      <td><span class="amount">${r.invoice_number}</span></td>
-      <td>${r.vendor_name}</td>
-      <td style="font-size:11px;color:var(--muted)">${fmtMonth(r.invoice_month)}</td>
-      <td class="amount">${r.cost_centre_number||'—'}</td>
-      <td class="amount">${fmtMoney(r.total_amount)}</td>
-      <td>${statusBadge(r.status)}</td>
-      <td><div class="actions">
-        ${r.status==='Draft'?`<button class="btn btn-ghost btn-sm" onclick="openWorkflow('${r.invoice_id}','submit','Submit')">Submit</button>`:''}
-        ${r.status==='Submitted'?`<button class="btn btn-ghost btn-sm" onclick="openWorkflow('${r.invoice_id}','verify','Verify')">Verify</button>`:''}
-        ${r.status==='Verified'?`<button class="btn btn-success btn-sm" onclick="openWorkflow('${r.invoice_id}','approve','Approve')">Approve</button>`:''}
-        ${['Submitted','Verified'].includes(r.status)?`<button class="btn btn-danger btn-sm" onclick="openWorkflow('${r.invoice_id}','reject','Reject')">Reject</button>`:''}
-      </div></td>
-    </tr>`).join('') : `<tr><td colspan="7" class="empty">No invoices pending approval</td></tr>`;
+async function loadBacklog(){
+  const rows=await api(`/api/reports/backlog?month=${$('bl-month').value}`);
+  $('backlog-tbl').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td class="amount">${r.invoice_number}</td><td>${r.vendor_name}</td>
+    <td style="font-size:11px;color:var(--muted)">${fmtMonth(r.invoice_month)}</td>
+    <td class="amount">${r.cost_centre_number||'—'}</td>
+    <td class="amount">${fmtM(r.total_amount)}</td><td>${statusBadge(r.status)}</td>
+    <td style="display:flex;gap:4px">
+      ${r.status==='Draft'?`<button class="btn btn-ghost btn-sm" onclick="openWf('${r.invoice_id}','submit','Submit')">Submit</button>`:''}
+      ${r.status==='Submitted'?`<button class="btn btn-ghost btn-sm" onclick="openWf('${r.invoice_id}','verify','Verify')">Verify</button>`:''}
+      ${r.status==='Verified'?`<button class="btn btn-success btn-sm" onclick="openWf('${r.invoice_id}','approve','Approve')">Approve</button>`:''}
+      ${['Submitted','Verified'].includes(r.status)?`<button class="btn btn-danger btn-sm" onclick="openWf('${r.invoice_id}','reject','Reject')">Reject</button>`:''}
+    </td>
+  </tr>`).join(''):`<tr><td colspan="7" class="empty">No invoices pending approval</td></tr>`;
 }
 
-async function loadRejections() {
-  const month=document.getElementById('rej-month').value;
-  const d = await api(`/api/reports/rejections?month=${month}`);
-  const grouped = d.grouped||{};
-  const keys = Object.keys(grouped);
-  if(!keys.length){document.getElementById('rejections-content').innerHTML=`<div class="empty" style="padding:40px">No rejected invoices</div>`;return;}
-  document.getElementById('rejections-content').innerHTML = keys.map(monthName=>`
+async function loadRejections(){
+  const d=await api(`/api/reports/rejections?month=${$('rej-month').value}`);
+  const grouped=d.grouped||{};
+  const keys=Object.keys(grouped);
+  $('rej-content').innerHTML=keys.length?keys.map(m=>`
     <div class="month-group">
-      <div class="month-heading">${monthName} — ${grouped[monthName].length} rejection(s)</div>
-      ${grouped[monthName].map(r=>`
-        <div class="rejection-card">
-          <div class="rejection-vendor">${r.vendor_name} — <span class="amount">${r.invoice_number}</span> — ${fmtMoney(r.total_amount)}</div>
-          <div class="rejection-reason">Reason: ${r.rejection_reason||'Not specified'}</div>
-          <div class="rejection-meta">Rejected by ${r.rejected_by||'—'} on ${r.rejected_at||'—'}</div>
-        </div>`).join('')}
-    </div>`).join('');
+      <div class="month-heading">${m} — ${grouped[m].length} rejection(s)</div>
+      ${grouped[m].map(r=>`<div class="rej-card"><div class="rej-vendor">${r.vendor_name} — <span class="amount">${r.invoice_number}</span> — ${fmtM(r.total_amount)}</div><div class="rej-reason">Reason: ${r.rejection_reason||'Not specified'}</div><div class="rej-meta">Rejected by ${r.rejected_by||'—'} · ${r.rejected_at||'—'}</div></div>`).join('')}
+    </div>`).join(''):`<div class="empty" style="padding:40px">No rejected invoices</div>`;
 }
 
-async function loadSchedule() {
-  const rows = await api('/api/reports/schedule');
-  document.getElementById('schedule-table').innerHTML = rows.length ? rows.map(r=>`
-    <tr>
-      <td>${r.batch_reference}</td>
-      <td>${r.scheduled_date}</td>
-      <td>${r.vendor}</td>
-      <td>${r.invoice_number}</td>
-      <td>${payBadge(r.payment_method)}</td>
-      <td class="amount">${r.bank_account||r.ecocash_number||'—'}</td>
-      <td class="amount">${fmtMoney(r.scheduled_amount)}</td>
-    </tr>`).join('') : `<tr><td colspan="7" class="empty">No scheduled payments</td></tr>`;
+async function loadSchedule(){
+  const rows=await api('/api/reports/schedule');
+  $('sched-tbl').innerHTML=rows.length?rows.map(r=>`<tr><td>${r.batch_reference}</td><td>${r.scheduled_date}</td><td>${r.vendor}</td><td>${r.invoice_number}</td><td>${payBadge(r.payment_method)}</td><td class="amount">${r.bank_account||r.ecocash_number||'—'}</td><td class="amount">${fmtM(r.scheduled_amount)}</td></tr>`).join(''):`<tr><td colspan="7" class="empty">No scheduled payments</td></tr>`;
 }
 
-async function loadMonthlySummary() {
-  const rows = await api('/api/reports/monthly_summary');
-  document.getElementById('monthly-table').innerHTML = rows.length ? rows.map(r=>`
-    <tr>
-      <td><strong>${fmtMonth(r.invoice_month)}</strong></td>
-      <td>${r.total_invoices}</td>
-      <td class="amount">${fmtMoney(r.total_amount)}</td>
-      <td class="amount" style="color:var(--success)">${fmtMoney(r.paid_amount)}</td>
-      <td class="amount" style="color:var(--accent)">${fmtMoney(r.outstanding_amount)}</td>
-      <td style="color:var(--danger)">${r.rejected_count}</td>
-    </tr>`).join('') : `<tr><td colspan="6" class="empty">No data</td></tr>`;
+async function loadMonthlySummary(){
+  const rows=await api('/api/reports/monthly_summary');
+  destroyChart('monthly');
+  _charts['monthly']=new Chart($('chart-monthly'),{
+    type:'bar',
+    data:{labels:rows.map(r=>fmtMonth(r.invoice_month)).reverse(),
+      datasets:[
+        {label:'Invoiced',data:rows.map(r=>r.total_amount).reverse(),backgroundColor:'rgba(79,142,247,.6)',borderRadius:3},
+        {label:'Paid',data:rows.map(r=>r.paid_amount).reverse(),backgroundColor:'rgba(34,211,165,.7)',borderRadius:3},
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#6b7a99',font:{size:11}}}},
+      scales:{y:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k',color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
+              x:{ticks:{color:'#6b7a99'},grid:{display:false}}}}
+  });
+  $('monthly-tbl').innerHTML=rows.length?rows.map(r=>`<tr><td><strong>${fmtMonth(r.invoice_month)}</strong></td><td>${r.total_invoices}</td><td class="amount">${fmtM(r.total_amount)}</td><td class="amount" style="color:var(--success)">${fmtM(r.paid_amount)}</td><td class="amount" style="color:var(--accent)">${fmtM(r.outstanding_amount)}</td><td style="color:var(--danger)">${r.rejected_count}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">No data</td></tr>`;
 }
 
-// ── AUDIT ─────────────────────────────────────────────────────────────────────
-async function openAudit(id,invNo) {
-  const d = await api(`/api/invoices/${id}`);
-  document.getElementById('audit-title').textContent=`Audit: ${invNo}`;
-  document.getElementById('audit-sub').textContent=`${d.vendor_name} — ${fmtMoney(d.total_amount)} — ${d.status}`;
-  document.getElementById('audit-timeline').innerHTML = (d.audit||[]).map((lg,i,arr)=>{
+// ── Audit Trail ───────────────────────────────────────────────────────────────
+async function openAudit(id,invNo){
+  const d=await api(`/api/invoices/${id}`);
+  $('aud-title').textContent=`Audit: ${invNo}`;
+  $('aud-sub').textContent=`${d.vendor_name} · ${fmtM(d.total_amount)} · ${d.status}`;
+  $('aud-tl').innerHTML=(d.audit||[]).map((lg,i,arr)=>{
     const isLast=i===arr.length-1;
     const dotCls=lg.to_status==='Rejected'?'tl-dot rejected':lg.to_status==='Paid'?'tl-dot paid':'tl-dot';
-    const arrow=lg.from_status?`${lg.from_status} → ${lg.to_status}`:lg.to_status;
-    return `<div class="tl-item">
-      <div style="position:relative"><div class="${dotCls}"></div>${isLast?'':'<div class="tl-line"></div>'}</div>
-      <div>
-        <div class="tl-action">${lg.action}${lg.notes?` <span style="color:var(--muted);font-weight:400">— ${lg.notes}</span>`:''}</div>
-        <div class="tl-meta">${arrow} · ${lg.performed_by} · ${lg.performed_at}</div>
-      </div>
-    </div>`;
-  }).join('') || '<p style="color:var(--muted)">No log entries.</p>';
+    return `<div class="tl-item"><div style="position:relative"><div class="${dotCls}"></div>${isLast?'':'<div class="tl-line"></div>'}</div><div><div class="tl-action">${lg.action}${lg.notes?` <span style="color:var(--muted);font-weight:400">— ${lg.notes}</span>`:''}</div><div class="tl-meta">${lg.from_status?lg.from_status+' → ':''} ${lg.to_status} · ${lg.performed_by} · ${lg.performed_at}</div></div></div>`;
+  }).join('')||'<p style="color:var(--muted);font-size:12px">No log entries.</p>';
   openModal('modal-audit');
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', ()=>{
-  document.getElementById('i-date').value = new Date().toISOString().split('T')[0];
-  // Check if already logged in
+  $('in-date').value=today();
   api('/api/me').then(r=>{
     if(r.username){
-      setCurrentUser(r);
-      document.getElementById('login-page').style.display='none';
-      document.getElementById('app').style.display='flex';
-      populateMonthFilters();
-      loadDashboard(); loadRecentInvoices();
+      currentUser=r;
+      $('u-init').textContent=r.initials; $('u-name').textContent=r.username; $('u-role').textContent=r.role;
+      ['in-by','wf-by','pay-by','ab-by','b-by'].forEach(id=>{const el=$(id);if(el)el.value=r.username});
+      $('login-page').style.display='none'; $('app').style.display='flex';
+      populateMonthFilters(); nav('dashboard');
     }
   });
 });
