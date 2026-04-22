@@ -559,6 +559,305 @@ def monthly_summary():
         ).fetchall()
     return jsonify(rows_to_list(rows))
 
+# ── FINANCIAL ENGINEERING ANALYTICS ──────────────────────────────────────────
+
+def compute_risk_score(age_days, outstanding, payment_terms, rejection_count, partial_count):
+    """
+    Vendor Risk Score (0-100). Higher = more risk.
+    Factors: age of oldest unpaid invoice, amount outstanding,
+    breach of payment terms, rejection history, partial payment history.
+    """
+    score = 0
+    # Age factor (0-40 pts)
+    if age_days > 90:   score += 40
+    elif age_days > 60: score += 28
+    elif age_days > 30: score += 15
+    else:               score += 5
+    # Payment terms breach (0-20 pts)
+    breach = max(0, age_days - payment_terms)
+    if breach > 60:   score += 20
+    elif breach > 30: score += 13
+    elif breach > 0:  score += 7
+    # Outstanding amount factor (0-20 pts) — relative to 50k baseline
+    amt_score = min(20, int(outstanding / 50000 * 20))
+    score += amt_score
+    # Rejection history (0-10 pts)
+    score += min(10, rejection_count * 3)
+    # Partial payment history (0-10 pts)
+    score += min(10, partial_count * 5)
+    return min(100, score)
+
+def risk_label(score):
+    if score >= 70: return "Critical"
+    if score >= 50: return "High"
+    if score >= 30: return "Medium"
+    return "Low"
+
+def risk_color(score):
+    if score >= 70: return "critical"
+    if score >= 50: return "high"
+    if score >= 30: return "medium"
+    return "low"
+
+@app.route("/api/analytics/vendor_risk")
+def vendor_risk():
+    """Vendor risk scorecard — aging, breach, amount, rejections."""
+    with get_conn() as conn:
+        vendors = conn.execute("SELECT * FROM vendors").fetchall()
+        results = []
+        for v in vendors:
+            vid = v["vendor_id"]
+            # Oldest unpaid invoice age
+            oldest = conn.execute(
+                "SELECT MIN(invoice_date) AS oldest FROM invoices WHERE vendor_id=? AND status NOT IN ('Paid','Rejected')", (vid,)
+            ).fetchone()["oldest"]
+            age_days = (date.today() - date.fromisoformat(oldest)).days if oldest else 0
+            # Total outstanding
+            outstanding = conn.execute(
+                "SELECT COALESCE(SUM(outstanding_amount),0) AS v FROM invoices WHERE vendor_id=? AND status NOT IN ('Paid','Rejected')", (vid,)
+            ).fetchone()["v"]
+            # Rejection count
+            rej = conn.execute(
+                "SELECT COUNT(*) AS v FROM invoices WHERE vendor_id=? AND status='Rejected'", (vid,)
+            ).fetchone()["v"]
+            # Partial count
+            partial = conn.execute(
+                "SELECT COUNT(*) AS v FROM invoices WHERE vendor_id=? AND status='Partially Paid'", (vid,)
+            ).fetchone()["v"]
+            # Invoice count unpaid
+            inv_count = conn.execute(
+                "SELECT COUNT(*) AS v FROM invoices WHERE vendor_id=? AND status NOT IN ('Paid','Rejected')", (vid,)
+            ).fetchone()["v"]
+            score = compute_risk_score(age_days, outstanding, v["payment_terms"], rej, partial)
+            results.append({
+                "vendor_id": vid,
+                "vendor": v["name"],
+                "category": v["category"],
+                "payment_terms": v["payment_terms"],
+                "oldest_invoice_age_days": age_days,
+                "outstanding": outstanding,
+                "open_invoices": inv_count,
+                "rejection_count": rej,
+                "partial_count": partial,
+                "risk_score": score,
+                "risk_label": risk_label(score),
+                "risk_color": risk_color(score),
+            })
+        results.sort(key=lambda x: -x["risk_score"])
+    return jsonify(results)
+
+@app.route("/api/analytics/cash_projection")
+def cash_projection():
+    """
+    Cash requirement projection for next 90 days.
+    Looks at: scheduled batches, approved-unscheduled invoices (estimated by due/terms),
+    and partially paid invoices still outstanding.
+    Returns week-by-week buckets.
+    """
+    today = date.today()
+    weeks = []
+    for w in range(13):  # 13 weeks = ~90 days
+        wstart = today + timedelta(days=w*7)
+        wend   = wstart + timedelta(days=6)
+        weeks.append({"week": w+1, "start": wstart.isoformat(), "end": wend.isoformat(),
+                      "scheduled": 0.0, "projected": 0.0, "label": wstart.strftime("%b %d")})
+
+    with get_conn() as conn:
+        # Scheduled batches — firm commitments
+        sched = conn.execute(
+            """SELECT pb.scheduled_date, COALESCE(SUM(bi.scheduled_amount),0) AS amt
+               FROM batch_items bi
+               JOIN payment_batches pb ON bi.batch_id=pb.batch_id
+               JOIN invoices i ON bi.invoice_id=i.invoice_id
+               WHERE i.status='Scheduled' AND pb.scheduled_date >= ?
+               GROUP BY pb.scheduled_date""",
+            (today.isoformat(),)
+        ).fetchall()
+        for s in sched:
+            sdate = date.fromisoformat(s["scheduled_date"])
+            for w in weeks:
+                if w["start"] <= s["scheduled_date"] <= w["end"]:
+                    w["scheduled"] += s["amt"]
+                    break
+
+        # Approved (unscheduled) — project by due_date or invoice_date + payment_terms
+        approved = conn.execute(
+            """SELECT i.invoice_date, i.due_date, i.outstanding_amount, v.payment_terms
+               FROM invoices i JOIN vendors v ON i.vendor_id=v.vendor_id
+               WHERE i.status='Approved'"""
+        ).fetchall()
+        for a in approved:
+            if a["due_date"]:
+                proj_date = date.fromisoformat(a["due_date"])
+            else:
+                proj_date = date.fromisoformat(a["invoice_date"]) + timedelta(days=a["payment_terms"])
+            for w in weeks:
+                if w["start"] <= proj_date.isoformat() <= w["end"]:
+                    w["projected"] += a["outstanding_amount"]
+                    break
+                elif proj_date < date.fromisoformat(w["start"]):
+                    # Overdue — add to first week
+                    weeks[0]["projected"] += a["outstanding_amount"]
+                    break
+
+        # Partially paid — add remaining to nearest projected week
+        partial = conn.execute(
+            """SELECT i.invoice_date, i.outstanding_amount, v.payment_terms
+               FROM invoices i JOIN vendors v ON i.vendor_id=v.vendor_id
+               WHERE i.status='Partially Paid'"""
+        ).fetchall()
+        for p in partial:
+            proj_date = date.fromisoformat(p["invoice_date"]) + timedelta(days=p["payment_terms"])
+            for w in weeks:
+                if w["start"] <= proj_date.isoformat() <= w["end"]:
+                    w["projected"] += p["outstanding_amount"]
+                    break
+                elif proj_date < date.fromisoformat(w["start"]):
+                    weeks[0]["projected"] += p["outstanding_amount"]
+                    break
+
+    # Cumulative
+    cum = 0
+    for w in weeks:
+        w["total"] = round(w["scheduled"] + w["projected"], 2)
+        cum += w["total"]
+        w["cumulative"] = round(cum, 2)
+        w["scheduled"] = round(w["scheduled"], 2)
+        w["projected"] = round(w["projected"], 2)
+
+    total_90 = sum(w["total"] for w in weeks)
+    return jsonify({"weeks": weeks, "total_90_days": round(total_90, 2)})
+
+@app.route("/api/analytics/working_capital")
+def working_capital():
+    """
+    Working capital / AP analytics:
+    - DPO (Days Payable Outstanding)
+    - AP Turnover
+    - Payment velocity trend (monthly paid vs invoiced)
+    - Approval cycle time (avg days Draft→Approved)
+    """
+    with get_conn() as conn:
+        # Total AP (outstanding)
+        total_ap = conn.execute(
+            "SELECT COALESCE(SUM(outstanding_amount),0) AS v FROM invoices WHERE status NOT IN ('Paid','Rejected')"
+        ).fetchone()["v"]
+        # Total purchases (all invoices excl rejected)
+        total_purchases = conn.execute(
+            "SELECT COALESCE(SUM(total_amount),0) AS v FROM invoices WHERE status != 'Rejected'"
+        ).fetchone()["v"]
+        # Total paid
+        total_paid = conn.execute(
+            "SELECT COALESCE(SUM(amount_paid),0) AS v FROM payments"
+        ).fetchone()["v"]
+        # DPO = (AP / COGS) * Days — approximate with 365 days
+        dpo = round((total_ap / total_purchases * 365), 1) if total_purchases > 0 else 0
+        # AP Turnover = Total Purchases / Average AP (approximate with current AP)
+        ap_turnover = round(total_purchases / total_ap, 2) if total_ap > 0 else 0
+        # Approval cycle time: avg days from created_at to Approved log entry
+        cycle_rows = conn.execute(
+            """SELECT i.invoice_id,
+                      julianday(wl.performed_at) - julianday(i.created_at) AS cycle_days
+               FROM invoices i
+               JOIN workflow_log wl ON wl.invoice_id=i.invoice_id AND wl.to_status='Approved'"""
+        ).fetchall()
+        avg_cycle = round(sum(r["cycle_days"] for r in cycle_rows) / len(cycle_rows), 1) if cycle_rows else 0
+        # Monthly payment velocity
+        velocity = conn.execute(
+            """SELECT strftime('%Y-%m', payment_date) AS month,
+                      COALESCE(SUM(amount_paid),0) AS paid
+               FROM payments GROUP BY month ORDER BY month DESC LIMIT 6"""
+        ).fetchall()
+        # Monthly invoiced
+        invoiced = conn.execute(
+            """SELECT invoice_month AS month, COALESCE(SUM(total_amount),0) AS invoiced
+               FROM invoices WHERE invoice_month IS NOT NULL
+               GROUP BY invoice_month ORDER BY invoice_month DESC LIMIT 6"""
+        ).fetchall()
+        vel_map = {r["month"]: r["paid"] for r in velocity}
+        inv_map = {r["month"]: r["invoiced"] for r in invoiced}
+        all_months = sorted(set(list(vel_map.keys())+list(inv_map.keys())), reverse=True)[:6]
+        trend = [{"month": m, "paid": vel_map.get(m,0), "invoiced": inv_map.get(m,0)} for m in reversed(all_months)]
+
+    return jsonify({
+        "total_ap": total_ap,
+        "total_purchases": total_purchases,
+        "total_paid": total_paid,
+        "dpo": dpo,
+        "ap_turnover": ap_turnover,
+        "avg_approval_cycle_days": avg_cycle,
+        "payment_velocity_trend": trend,
+    })
+
+@app.route("/api/analytics/aging_trend")
+def aging_trend():
+    """Monthly aging snapshot — how the aging buckets evolved over time."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT invoice_month,
+                      COALESCE(SUM(CASE WHEN julianday('now')-julianday(invoice_date)<=30 THEN outstanding_amount ELSE 0 END),0) AS b0_30,
+                      COALESCE(SUM(CASE WHEN julianday('now')-julianday(invoice_date) BETWEEN 31 AND 60 THEN outstanding_amount ELSE 0 END),0) AS b31_60,
+                      COALESCE(SUM(CASE WHEN julianday('now')-julianday(invoice_date) BETWEEN 61 AND 90 THEN outstanding_amount ELSE 0 END),0) AS b61_90,
+                      COALESCE(SUM(CASE WHEN julianday('now')-julianday(invoice_date)>90 THEN outstanding_amount ELSE 0 END),0) AS b91plus
+               FROM invoices
+               WHERE status NOT IN ('Paid','Rejected') AND invoice_month IS NOT NULL
+               GROUP BY invoice_month ORDER BY invoice_month"""
+        ).fetchall()
+    return jsonify(rows_to_list(rows))
+
+@app.route("/api/analytics/cost_centre_breakdown")
+def cost_centre_breakdown():
+    """Outstanding by cost centre — supports budget control analysis."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT cost_centre_number, cost_centre_name,
+                      COUNT(*) AS invoice_count,
+                      COALESCE(SUM(outstanding_amount),0) AS outstanding,
+                      COALESCE(SUM(total_amount),0) AS total_invoiced
+               FROM invoices
+               WHERE status NOT IN ('Paid','Rejected') AND cost_centre_number IS NOT NULL
+               GROUP BY cost_centre_number ORDER BY outstanding DESC"""
+        ).fetchall()
+    return jsonify(rows_to_list(rows))
+
+@app.route("/api/analytics/payment_performance")
+def payment_performance():
+    """
+    On-time vs late payment analysis.
+    Compares payment_date vs (invoice_date + payment_terms).
+    """
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT p.payment_date, i.invoice_date, v.payment_terms, v.name AS vendor,
+                      p.amount_paid, i.invoice_number
+               FROM payments p
+               JOIN invoices i ON p.invoice_id=i.invoice_id
+               JOIN vendors v ON i.vendor_id=v.vendor_id"""
+        ).fetchall()
+    on_time = 0; late = 0; total_delay = 0; vendor_late = defaultdict(int)
+    details = []
+    for r in rows:
+        try:
+            pay_date = date.fromisoformat(r["payment_date"])
+            due_date = date.fromisoformat(r["invoice_date"]) + timedelta(days=r["payment_terms"])
+            delay = (pay_date - due_date).days
+            if delay <= 0:
+                on_time += 1; status = "On Time"
+            else:
+                late += 1; total_delay += delay; vendor_late[r["vendor"]] += 1; status = "Late"
+            details.append({"vendor": r["vendor"], "invoice": r["invoice_number"],
+                            "delay_days": delay, "status": status, "amount": r["amount_paid"]})
+        except: pass
+    total = on_time + late
+    avg_delay = round(total_delay / late, 1) if late > 0 else 0
+    return jsonify({
+        "on_time": on_time, "late": late, "total": total,
+        "on_time_pct": round(on_time/total*100, 1) if total else 0,
+        "avg_delay_days": avg_delay,
+        "worst_vendors": sorted([{"vendor":k,"late_count":v} for k,v in vendor_late.items()], key=lambda x:-x["late_count"])[:5],
+        "details": details[:50],
+    })
+
 @app.route("/")
 def index():
     return send_from_directory(os.path.join(BASE_DIR,"static"), "index.html")
