@@ -913,6 +913,7 @@ def dashboard():
         # Top vendors by outstanding
         top_vendors = conn.execute(
             """SELECT v.name AS vendor, v.payment_method, v.bank_account,
+                      COALESCE(i.currency,'USD') AS currency,
                       COALESCE(SUM(i.outstanding_amount),0) AS total_outstanding,
                       COUNT(i.invoice_id) AS invoice_count
                FROM invoices i JOIN vendors v ON i.vendor_id=v.vendor_id
@@ -1933,6 +1934,115 @@ def sop_checklist():
     })
 
 
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MISSING REPORT ROUTES — aging, schedule, rejections
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.route("/api/reports/aging")
+def report_aging():
+    """Aging report — groups outstanding invoices by age bucket per vendor."""
+    month = request.args.get("month", "")
+    sql = """SELECT i.invoice_date, i.outstanding_amount, i.currency,
+                    v.name AS vendor, v.payment_method
+             FROM invoices i JOIN vendors v ON i.vendor_id = v.vendor_id
+             WHERE i.status NOT IN ('Paid', 'Rejected') AND i.outstanding_amount > 0"""
+    params = []
+    if month:
+        sql += " AND i.invoice_month = ?"
+        params.append(month)
+
+    BUCKETS = ["0-30 days", "31-60 days", "61-90 days", "91+ days"]
+
+    with get_conn() as conn:
+        rows = conn.execute(sql, params).fetchall()
+
+    # Build per-vendor bucket totals
+    vendor_data = {}
+    totals = {b: 0.0 for b in BUCKETS}
+
+    for r in rows:
+        bucket = age_bucket(r["invoice_date"])
+        if bucket not in BUCKETS:
+            bucket = "91+ days"
+        vendor = r["vendor"]
+        amt    = float(r["outstanding_amount"] or 0)
+        if vendor not in vendor_data:
+            vendor_data[vendor] = {b: 0.0 for b in BUCKETS}
+            vendor_data[vendor]["total"] = 0.0
+            vendor_data[vendor]["vendor"] = vendor
+        vendor_data[vendor][bucket] = round(vendor_data[vendor][bucket] + amt, 2)
+        vendor_data[vendor]["total"] = round(vendor_data[vendor]["total"] + amt, 2)
+        totals[bucket] = round(totals.get(bucket, 0) + amt, 2)
+
+    vendors_list = sorted(vendor_data.values(), key=lambda x: -x["total"])
+    grand_total  = round(sum(v["total"] for v in vendors_list), 2)
+
+    return jsonify({
+        "vendors":     vendors_list,
+        "totals":      totals,
+        "grand_total": grand_total,
+        "buckets":     BUCKETS,
+    })
+
+
+@app.route("/api/reports/rejections")
+def report_rejections():
+    """Rejection report grouped by month."""
+    month = request.args.get("month", "")
+    sql   = """SELECT i.invoice_number, i.total_amount, i.rejection_reason,
+                      i.invoice_month, i.invoice_date, i.currency,
+                      v.name AS vendor_name,
+                      wl.performed_by AS rejected_by,
+                      wl.performed_at AS rejected_at
+               FROM invoices i
+               JOIN vendors v ON i.vendor_id = v.vendor_id
+               LEFT JOIN workflow_log wl ON wl.invoice_id = i.invoice_id
+                   AND wl.to_status = 'Rejected'
+               WHERE i.status = 'Rejected'"""
+    params = []
+    if month:
+        sql += " AND i.invoice_month = ?"
+        params.append(month)
+    sql += " ORDER BY wl.performed_at DESC"
+
+    with get_conn() as conn:
+        rows = conn.execute(sql, params).fetchall()
+
+    from collections import defaultdict
+    grouped = defaultdict(list)
+    for r in rows:
+        key = r["invoice_month"] or "Unknown Month"
+        grouped[key].append(dict(r))
+
+    return jsonify({
+        "grouped": dict(grouped),
+        "total":   len(rows),
+    })
+
+
+@app.route("/api/reports/schedule")
+def report_schedule():
+    """Payment schedule — all items in payment batches with vendor bank details."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT pb.batch_reference, pb.scheduled_date,
+                   v.name AS vendor, v.payment_method,
+                   v.bank_account, v.ecocash_number,
+                   i.invoice_number, i.invoice_id, i.outstanding_amount,
+                   i.currency, bi.scheduled_amount, bi.item_id
+            FROM batch_items bi
+            JOIN payment_batches pb ON pb.batch_id = bi.batch_id
+            JOIN invoices i         ON i.invoice_id = bi.invoice_id
+            JOIN vendors v          ON v.vendor_id  = i.vendor_id
+            WHERE i.status NOT IN ('Paid', 'Rejected')
+            ORDER BY pb.scheduled_date ASC, v.name ASC
+        """).fetchall()
+    return jsonify(rows_to_list(rows))
+
 if __name__ == "__main__":
+    app.config["SESSION_PERMANENT"] = False
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     init_db()
     app.run(debug=True, port=5000)
