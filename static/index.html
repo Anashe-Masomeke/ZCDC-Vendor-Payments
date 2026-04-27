@@ -348,14 +348,31 @@ tr:hover td{background:rgba(200,150,12,.03)}
     <div class="chart-card">
       <div class="chart-title">Top Vendors by Outstanding</div>
       <div class="chart-sub">Amount owed to each supplier</div>
-      <canvas id="ch-top" height="180"></canvas>
+      <div style="position:relative;height:260px;width:100%;min-height:260px"><canvas id="ch-top" style="display:block"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Invoice Status Breakdown</div>
       <div class="chart-sub">Current pipeline status</div>
-      <canvas id="ch-status" height="180"></canvas>
+      <div style="position:relative;height:260px;width:100%;min-height:260px"><canvas id="ch-status" style="display:block"></canvas></div>
     </div>
   </div>
+  <!-- Recent Invoices Table -->
+  <div class="card" id="dash-recent-wrap" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="card-title" style="margin:0">📋 Recent Invoices</div>
+      <button class="btn btn-out btn-sm" onclick="show('invoices')">View All →</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Invoice #</th><th>Vendor</th><th>Date</th>
+          <th>Currency</th><th>Amount</th><th>Outstanding</th><th>Status</th>
+        </tr></thead>
+        <tbody id="dash-recent-invoices"></tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-title">⚡ Quick Actions</div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap">
@@ -659,7 +676,10 @@ tr:hover td{background:rgba(200,150,12,.03)}
   </div>
   <div class="chart-card" style="margin-bottom:14px">
     <div class="chart-title">Aging Buckets</div>
-    <canvas id="ch-aging" height="160"></canvas>
+    <div class="chart-sub">Outstanding amounts by age band</div>
+    <div style="position:relative;height:220px;width:100%;min-height:220px">
+      <canvas id="ch-aging" style="display:block"></canvas>
+    </div>
   </div>
   <div class="tbl-wrap"><table>
     <thead><tr><th>Vendor</th><th>0–30 days</th><th>31–60 days</th><th>61–90 days</th><th>91+ days</th><th>Total</th></tr></thead>
@@ -1021,11 +1041,10 @@ async function doLogout() {
   setTimeout(()=>$('app').style.display='', 0);
 }
 
-// Auto-check session on load
+// Always show login first — never auto-login
 window.addEventListener('load', async()=>{
-  const d = await api('/api/me');
-  if(d.username) { currentUser=d; enterApp(d); }
-  else { $('auth-screen').style.display='flex'; }
+  $('auth-screen').style.display = 'flex';
+  $('app').classList.remove('show');
   document.addEventListener('keydown',e=>{
     if(e.key==='Enter'){
       if(document.getElementById('af-login').classList.contains('active')) doLogin();
@@ -1076,8 +1095,7 @@ async function populateVendorSelects() {
 // ═══════════════════════════════════════════════════════════════════
 async function loadDashboard() {
   const d = await api('/api/reports/dashboard');
-  // ── Currency helper ──────────────────────────────────────────────────
-  const fmtZiG = n => 'ZiG '+Number(n||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtZiG = n => 'ZiG '+Number(n||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   $('kpi-row').innerHTML = `
     <div class="kpi gold"><div class="kpi-label">Total Outstanding</div>
@@ -1102,36 +1120,186 @@ async function loadDashboard() {
       </div>
       <div class="kpi-value kpi-zig-val">${fmtZiG(d.outstanding_zig||0)}</div>
       <div class="kpi-sub">${d.invoices_zig||0} open invoice(s)</div></div>`;
-  // Charts
+
+  // Wait for DOM layout before drawing charts
+  await new Promise(r => setTimeout(r, 80));
+
+  // ── TOP VENDORS HORIZONTAL BAR CHART ──────────────────────────────────────
   destroyChart('ch-top');
-  // Split vendors by currency for colour coding
-  const topColors = d.top_vendors.map(v=>(v.currency||'USD')==='ZiG'?'rgba(167,139,250,.75)':'rgba(200,150,12,.75)');
-  const topBorders = d.top_vendors.map(v=>(v.currency||'USD')==='ZiG'?'#a78bfa':'#c9960c');
-  charts['ch-top'] = new Chart($('ch-top'),{type:'bar',data:{
-    labels:d.top_vendors.map(v=>v.name.slice(0,16)+(v.currency&&v.currency!=='USD'?' (ZiG)':' (USD)')),
-    datasets:[{label:'Outstanding',data:d.top_vendors.map(v=>v.outstanding),
-      backgroundColor:topColors,borderColor:topBorders,borderWidth:1,borderRadius:6}]
-  },options:{responsive:true,plugins:{legend:{display:false},
-    tooltip:{callbacks:{label:ctx=>{
-      const v=d.top_vendors[ctx.dataIndex];
-      const curr=(v.currency||'USD');
-      return curr==='ZiG'?'ZiG '+ctx.raw.toLocaleString('en',{minimumFractionDigits:2}):'$'+ctx.raw.toLocaleString('en',{minimumFractionDigits:2});
-    }}}},
-  scales:{
-    x:{ticks:{color:'#7a6a40',font:{size:10}},grid:{color:'#1a1500'}},
-    y:{ticks:{color:'#7a6a40',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'#1a1500'}}}}});
-  // Status donut
-  const invs = await api('/api/invoices');
-  const counts={};
-  invs.forEach(i=>{counts[i.status]=(counts[i.status]||0)+1});
-  const cols={'Draft':'#6b7280','Submitted':'#4A90D9','Verified':'#f59e0b','Approved':'#3DCC78',
-    'Scheduled':'#c084fc','Partially Paid':'#fb923c','Paid':'#22c55e','Rejected':'#e05050'};
+  const topEl = $('ch-top');
+  if (!d.top_vendors || d.top_vendors.length === 0) {
+    topEl.style.display = 'none';
+    topEl.insertAdjacentHTML('afterend',
+      '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px">No outstanding invoices to display</div>');
+  } else {
+    topEl.style.display = 'block';
+    // Use gold bars for USD, purple for ZiG — colour by total_outstanding size
+    const maxVal = Math.max(...d.top_vendors.map(v => v.total_outstanding || v.outstanding || 0));
+    const topColors  = d.top_vendors.map((v,i) => {
+      const alpha = 0.5 + 0.5 * ((v.total_outstanding || v.outstanding || 0) / (maxVal||1));
+      return `rgba(200,150,12,${alpha.toFixed(2)})`;
+    });
+    const topBorders = d.top_vendors.map(() => '#C8960C');
+    charts['ch-top'] = new Chart(topEl, {
+      type: 'bar',
+      data: {
+        labels: d.top_vendors.map(v => {
+            const n = v.vendor || v.name || 'Unknown';
+            return n.length > 22 ? n.slice(0,22)+'...' : n;
+          }),
+        datasets: [{
+          label: 'Outstanding',
+          data: d.top_vendors.map(v => v.total_outstanding || v.outstanding || 0),
+          backgroundColor: topColors,
+          borderColor: topBorders,
+          borderWidth: 1.5,
+          borderRadius: 5,
+          barThickness: 20,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1c1c1c',
+            borderColor: '#3d3000',
+            borderWidth: 1,
+            callbacks: {
+              label: ctx => {
+                const v = d.top_vendors[ctx.dataIndex];
+                const val = ctx.raw.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+                const invoices = v.invoice_count || '';
+                return `  $${val}${invoices ? '  ('+invoices+' invoice'+(invoices>1?'s':'')+')' : ''}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color:'#7a6a40', font:{size:10}, callback: v => '$'+v.toLocaleString() },
+            grid:  { color:'rgba(42,34,0,0.5)' },
+            border:{ display:false }
+          },
+          y: {
+            ticks: { color:'#c8b880', font:{size:11} },
+            grid:  { display:false },
+            border:{ display:false }
+          }
+        }
+      }
+    });
+  }
+
+  // ── INVOICE STATUS DOUGHNUT CHART — use pre-aggregated data from dashboard ──
   destroyChart('ch-status');
-  charts['ch-status'] = new Chart($('ch-status'),{type:'doughnut',data:{
-    labels:Object.keys(counts),
-    datasets:[{data:Object.values(counts),backgroundColor:Object.keys(counts).map(k=>cols[k]||'#888'),
-      borderColor:'#111',borderWidth:2}]
-  },options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#7a6a40',font:{size:10},boxWidth:10}}}}});
+  const statusEl = $('ch-status');
+  // Use status_breakdown from dashboard API (no extra network call needed)
+  const counts = d.status_breakdown || {};
+
+  if (Object.keys(counts).length === 0) {
+    statusEl.style.display = 'none';
+    statusEl.insertAdjacentHTML('afterend',
+      '<div style="height:220px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px">No invoices yet</div>');
+  } else {
+    statusEl.style.display = 'block';
+    const STATUS_COLORS = {
+      'Draft':'#6b7280','Submitted':'#4A90D9','Verified':'#f59e0b',
+      'Approved':'#3DCC78','Scheduled':'#c084fc','Partially Paid':'#fb923c',
+      'Paid':'#22c55e','Rejected':'#e05050'
+    };
+    const labels = Object.keys(counts);
+    const vals   = Object.values(counts);
+    const colors = labels.map(k => STATUS_COLORS[k]||'#888');
+    charts['ch-status'] = new Chart(statusEl, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: vals,
+          backgroundColor: colors,
+          borderColor: '#111',
+          borderWidth: 2,
+          hoverOffset: 10,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '58%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+            color: '#ffffff',
+            font: { size: 12, weight: 'bold' },
+            boxWidth: 14,
+            padding: 14,
+              generateLabels: chart => {
+                const ds    = chart.data.datasets[0];
+                const total = ds.data.reduce((a,b)=>a+b,0);
+                return chart.data.labels.map((label,i) => ({
+                  text: label+' — '+ds.data[i]+' ('+Math.round(ds.data[i]/total*100)+'%)',
+                  fillStyle: ds.backgroundColor[i],
+                  strokeStyle: '#111',
+                  lineWidth: 1,
+                  hidden: false,
+                  index: i
+                }));
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: '#1c1c1c',
+            borderColor: '#3d3000',
+            borderWidth: 1,
+            callbacks: {
+              label: ctx => {
+                const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                const pct   = Math.round(ctx.raw/total*100);
+                return '  '+ctx.label+': '+ctx.raw+' invoices ('+pct+'%)';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // ── RECENT INVOICES TABLE ─────────────────────────────────────────────────
+  const recentTbody = $('dash-recent-invoices');
+  if(recentTbody) {
+    const recentData = d.recent_invoices || [];
+    if(recentData.length > 0) {
+      recentTbody.innerHTML = recentData.map(i => {
+        const sc = {'Draft':'#6b7280','Submitted':'#4A90D9','Verified':'#f59e0b',
+          'Approved':'#3DCC78','Scheduled':'#c084fc','Partially Paid':'#fb923c',
+          'Paid':'#22c55e','Rejected':'#e05050'}[i.status] || '#888';
+        const curr = i.currency || 'USD';
+        const fa = v => curr==='ZiG'
+          ? 'ZiG '+Number(v||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})
+          : '$'+Number(v||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+        const ageDays = Math.floor(i.age_days || 0);
+        const ac = ageDays>90?'#e05050':ageDays>60?'#fb923c':ageDays>30?'#f59e0b':'#22c55e';
+        return `<tr>
+          <td style="font-family:var(--mono);font-size:12px">${i.invoice_number}</td>
+          <td style="font-size:12px">${i.vendor_name}</td>
+          <td style="font-size:11px;color:var(--muted)">${i.invoice_date} <span style="color:${ac};font-size:10px">(${ageDays}d)</span></td>
+          <td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;
+            background:${curr==='ZiG'?'rgba(192,132,252,.15)':'rgba(34,197,94,.12)'};
+            color:${curr==='ZiG'?'#c084fc':'#22c55e'}">${curr}</span></td>
+          <td style="font-family:var(--mono);font-size:12px">${fa(i.total_amount)}</td>
+          <td style="font-family:var(--mono);font-size:12px;color:${i.outstanding_amount>0?'var(--warn)':'var(--green)'}">${fa(i.outstanding_amount)}</td>
+          <td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;
+            background:${sc}22;color:${sc};border:1px solid ${sc}44">${i.status}</span></td>
+        </tr>`;
+      }).join('');
+    } else {
+      recentTbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No invoices yet — add your first invoice to get started.</td></tr>';
+    }
+  }
 }
 
 function destroyChart(id) { if(charts[id]){charts[id].destroy();delete charts[id];} }
@@ -1563,28 +1731,105 @@ async function loadWorkingCapital() {
 // AGING
 // ═══════════════════════════════════════════════════════════════════
 async function loadAging() {
-  const month=$('aging-month').value;
-  const d = await api('/api/reports/aging?month='+month);
-  const buckets=['0-30 days','31-60 days','61-90 days','91+ days'];
-  const bcolors=['rgba(61,204,120,.7)','rgba(245,158,11,.7)','rgba(251,146,60,.7)','rgba(224,80,80,.7)'];
+  const month = $('aging-month') ? $('aging-month').value : '';
+  $('aging-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Loading...</td></tr>';
+
+  let d;
+  try {
+    d = await api('/api/reports/aging?month=' + month);
+  } catch(e) {
+    $('aging-body').innerHTML = '<tr><td colspan="6" class="empty">Error loading aging data</td></tr>';
+    return;
+  }
+
+  if (!d || !d.vendors) {
+    $('aging-body').innerHTML = '<tr><td colspan="6" class="empty">No data returned</td></tr>';
+    return;
+  }
+
+  const buckets = ['0-30 days','31-60 days','61-90 days','91+ days'];
+  const bcolors = ['rgba(61,204,120,.8)','rgba(245,158,11,.8)','rgba(251,146,60,.8)','rgba(224,80,80,.8)'];
+  const bborders= ['#3DCC78','#f59e0b','#fb923c','#e05050'];
+
+  // Render table first
+  if (!d.vendors.length) {
+    $('aging-body').innerHTML = '<tr><td colspan="6" class="empty">No outstanding invoices found</td></tr>';
+    $('aging-foot').innerHTML = '';
+  } else {
+    $('aging-body').innerHTML = d.vendors.map(v => `<tr>
+      <td><strong>${v.vendor}</strong></td>
+      ${buckets.map(b => {
+        const amt = v[b] || 0;
+        const color = b === '91+ days' && amt > 0 ? 'color:var(--red);font-weight:600' :
+                      b === '61-90 days' && amt > 0 ? 'color:var(--warn)' : '';
+        return `<td style="font-family:var(--mono);${color}">${fmt(amt)}</td>`;
+      }).join('')}
+      <td style="font-family:var(--mono);font-weight:700;color:var(--warn)">${fmt(v.total)}</td>
+    </tr>`).join('');
+    $('aging-foot').innerHTML = `<tr style="background:var(--faint)">
+      <td style="font-weight:700;color:var(--gl)">TOTALS</td>
+      ${buckets.map(b => `<td style="font-family:var(--mono);font-weight:700;color:var(--gl)">${fmt(d.totals[b]||0)}</td>`).join('')}
+      <td style="font-family:var(--mono);font-weight:700;color:var(--gl)">${fmt(d.grand_total||0)}</td>
+    </tr>`;
+  }
+
+  // Now draw chart with delay to let DOM settle
+  await new Promise(r => setTimeout(r, 80));
   destroyChart('ch-aging');
-  charts['ch-aging'] = new Chart($('ch-aging'),{type:'bar',data:{
-    labels:buckets,
-    datasets:[{label:'Outstanding',data:buckets.map(b=>d.totals[b]||0),
-      backgroundColor:bcolors,borderRadius:6}]
-  },options:{responsive:true,plugins:{legend:{display:false}},scales:{
-    x:{ticks:{color:'#7a6a40',font:{size:11}},grid:{color:'#1a1500'}},
-    y:{ticks:{color:'#7a6a40',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'#1a1500'}}}}});
-  $('aging-body').innerHTML = d.vendors.map(v=>`<tr>
-    <td><strong>${v.vendor}</strong></td>
-    ${buckets.map(b=>`<td style="font-family:var(--mono)">${fmt(v[b]||0)}</td>`).join('')}
-    <td style="font-family:var(--mono);font-weight:600;color:var(--warn)">${fmt(v.total)}</td>
-  </tr>`).join('') || '<tr><td colspan="6" class="empty">No aging data</td></tr>';
-  $('aging-foot').innerHTML = `<tr style="background:var(--faint)">
-    <td style="font-weight:700;color:var(--gl)">TOTALS</td>
-    ${buckets.map(b=>`<td style="font-family:var(--mono);font-weight:600;color:var(--gl)">${fmt(d.totals[b]||0)}</td>`).join('')}
-    <td style="font-family:var(--mono);font-weight:700;color:var(--gl)">${fmt(d.grand_total)}</td>
-  </tr>`;
+  const agingEl = $('ch-aging');
+  if (!agingEl) return;
+
+  const chartData = buckets.map(b => d.totals[b] || 0);
+  const hasData   = chartData.some(v => v > 0);
+
+  if (!hasData) {
+    agingEl.style.display = 'none';
+    return;
+  }
+
+  agingEl.style.display = 'block';
+  charts['ch-aging'] = new Chart(agingEl, {
+    type: 'bar',
+    data: {
+      labels: buckets,
+      datasets: [{
+        label: 'Outstanding (USD)',
+        data: chartData,
+        backgroundColor: bcolors,
+        borderColor: bborders,
+        borderWidth: 1.5,
+        borderRadius: 6,
+        barThickness: 36,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1c1c1c',
+          borderColor: '#3d3000',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => '  $'+ctx.raw.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color:'#c8b880', font:{size:11} },
+          grid:  { color:'rgba(42,34,0,0.4)' },
+          border:{ display:false }
+        },
+        y: {
+          ticks: { color:'#7a6a40', font:{size:10}, callback: v => '$'+v.toLocaleString() },
+          grid:  { color:'rgba(42,34,0,0.3)' },
+          border:{ display:false }
+        }
+      }
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════
