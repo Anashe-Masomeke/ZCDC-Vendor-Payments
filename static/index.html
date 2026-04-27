@@ -2,1294 +2,1729 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZCDC – Vendor Payables Intelligence System</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ZCDC – Vendor Tracking System</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0b0e17;--surface:#121620;--card:#171c2a;--card2:#1c2232;--border:#242d42;
-  --accent:#4f8ef7;--accent2:#22d3a5;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--purple:#a78bfa;--orange:#fb923c;
-  --text:#e8ecf4;--muted:#6b7a99;--faint:#1e2538;
+  --bg:#0a0a0a;--surface:#111;--card:#161616;--card2:#1c1c1c;
+  --border:#2a2200;--border2:#3d3000;
+  --gold:#C8960C;--gl:#F0C040;--gold-dim:#8a6500;
+  --text:#F0E8D0;--muted:#7a6a40;--faint:#1a1500;
+  --red:#e05050;--green:#3DCC78;--blue:#4A90D9;--warn:#f59e0b;
   --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
-  --risk-low:#22c55e;--risk-medium:#f59e0b;--risk-high:#ef4444;--risk-critical:#dc2626;
+  --risk-low:#3DCC78;--risk-medium:#f59e0b;--risk-high:#e05050;--risk-critical:#dc2626;
 }
-*{scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+*{scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6;min-height:100vh}
 
-/* LOGIN */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
-.login-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:44px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
-.login-logo{text-align:center;margin-bottom:32px}
-.login-mark{font-size:11px;font-weight:600;letter-spacing:.16em;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
-.login-title{font-size:22px;font-weight:600}
-.login-sub{font-size:13px;color:var(--muted);margin-top:4px}
-.login-users{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:11px;color:var(--muted);line-height:1.9}
-.login-users strong{color:var(--text)}
+/* ── AUTH SCREENS ───────────────────────────────────────────────────────── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(200,150,12,.12) 0%,transparent 60%);}
+.auth-box{background:var(--card);border:1px solid var(--border2);border-radius:20px;
+  padding:44px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-mark{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.auth-title{font-family:'DM Sans',sans-serif;font-size:24px;font-weight:600;color:var(--gl)}
+.auth-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.auth-badge{display:inline-flex;width:56px;height:56px;background:linear-gradient(135deg,var(--gold),var(--gl));
+  border-radius:14px;align-items:center;justify-content:center;font-size:1.6rem;margin-bottom:.75rem;
+  box-shadow:0 8px 28px rgba(200,150,12,.35);}
+.auth-tabs{display:flex;gap:.4rem;margin-bottom:1.5rem;background:#1a1a00;border-radius:10px;padding:.25rem;}
+.auth-tab{flex:1;padding:.55rem;border:none;border-radius:8px;cursor:pointer;
+  font-family:var(--font);font-size:.83rem;font-weight:500;transition:all .2s;background:transparent;color:var(--muted);}
+.auth-tab.active{background:linear-gradient(135deg,var(--gold),var(--gl));color:#000;}
+.auth-form{display:none}.auth-form.active{display:block}
+.fld{margin-bottom:.85rem}
+.fld label{display:block;font-size:.68rem;font-weight:600;color:var(--muted);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:.32rem}
+.fld input,.fld select{width:100%;background:#111100;border:1px solid var(--border2);border-radius:9px;
+  padding:.65rem .9rem;color:var(--text);font-family:var(--font);font-size:.88rem;outline:none;transition:border-color .2s;}
+.fld input:focus,.fld select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,150,12,.12)}
+.fld select option{background:#111100}
+.auth-btn{width:100%;padding:.8rem;background:linear-gradient(135deg,var(--gold),var(--gl));
+  border:none;border-radius:10px;color:#000;font-family:var(--font);font-weight:700;
+  font-size:.9rem;cursor:pointer;margin-top:.5rem;letter-spacing:.02em;transition:opacity .2s}
+.auth-btn:hover{opacity:.88}
+.auth-err{margin-top:.75rem;padding:.65rem .9rem;border-radius:8px;font-size:.82rem;display:none;
+  background:rgba(224,80,80,.12);border:1px solid rgba(224,80,80,.3);color:#ff9090}
+.auth-hint{margin-top:1rem;padding:.75rem;background:rgba(200,150,12,.06);
+  border:1px solid rgba(200,150,12,.15);border-radius:9px;font-size:.72rem;color:var(--muted);line-height:1.8}
+.auth-hint strong{color:var(--gl)}
 
-/* SHELL */
-.app{display:flex;min-height:100vh;display:none}
-aside{width:234px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
-.logo{padding:22px 18px 16px;border-bottom:1px solid var(--border)}
-.logo-mark{font-size:9px;font-weight:600;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
-.logo-name{font-size:14px;font-weight:600;margin-top:2px}
+/* ── APP SHELL ──────────────────────────────────────────────────────────── */
+.app{display:none;min-height:100vh;display:none;flex-direction:row}
+.app.show{display:flex}
+aside{width:230px;min-height:100vh;background:#0e0e00;border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 16px 14px;border-bottom:1px solid var(--border)}
+.logo-mark{font-size:9px;font-weight:700;letter-spacing:.16em;color:var(--gold);text-transform:uppercase}
+.logo-name{font-size:14px;font-weight:600;color:var(--gl);margin-top:2px}
 .logo-sub{font-size:10px;color:var(--muted);margin-top:1px}
-nav{padding:10px 0;flex:1;overflow-y:auto}
-.nav-section{padding:16px 16px 4px;font-size:9px;font-weight:600;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
-.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;color:var(--muted);cursor:pointer;transition:all .15s;font-size:12px;border-left:2px solid transparent}
-.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
-.nav-item.active{color:var(--accent);background:rgba(79,142,247,.07);border-left-color:var(--accent)}
-.nav-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0}
-.nav-badge{margin-left:auto;background:rgba(239,68,68,.2);color:var(--danger);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:600}
-.nav-logout{margin:10px 12px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:11px;width:calc(100% - 24px);text-align:left;font-family:var(--font)}
-.nav-logout:hover{color:var(--danger);border-color:rgba(239,68,68,.25)}
+nav{padding:8px 0;flex:1;overflow-y:auto}
+.nav-sec{padding:14px 14px 3px;font-size:8px;font-weight:700;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 16px;color:var(--muted);cursor:pointer;
+  transition:all .15s;font-size:11.5px;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(200,150,12,.04)}
+.nav-item.active{color:var(--gl);background:rgba(200,150,12,.08);border-left-color:var(--gold)}
+.nav-icon{font-size:12px;width:15px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:rgba(224,80,80,.2);color:var(--red);border-radius:8px;
+  padding:1px 6px;font-size:9px;font-weight:700}
+.aside-footer{padding:10px 12px;border-top:1px solid var(--border)}
+.logout-btn{width:100%;padding:7px 12px;border-radius:8px;border:1px solid var(--border2);
+  background:transparent;color:var(--muted);cursor:pointer;font-size:11px;font-family:var(--font);text-align:left}
+.logout-btn:hover{color:var(--red);border-color:rgba(224,80,80,.25)}
 main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.topbar{padding:13px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0}
-.topbar-left .page-title{font-size:15px;font-weight:600}
-.topbar-left .page-sub{font-size:11px;color:var(--muted)}
-.user-pill{display:flex;align-items:center;gap:8px;font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px 12px 4px 4px}
-.avatar{width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
-.user-name{color:var(--text);font-weight:500}
-.user-role{color:var(--muted)}
-.content{flex:1;overflow-y:auto;padding:22px}
+.topbar{padding:12px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+  justify-content:space-between;background:var(--surface);flex-shrink:0}
+.page-title{font-size:14px;font-weight:600;color:var(--gl)}
+.page-sub{font-size:10px;color:var(--muted)}
+.user-pill{display:flex;align-items:center;gap:8px;font-size:11px;background:var(--card);
+  border:1px solid var(--border2);border-radius:20px;padding:3px 11px 3px 3px}
+.avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gl));
+  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#000;flex-shrink:0}
+.content{flex:1;overflow-y:auto;padding:20px}
 .section{display:none}.section.active{display:block}
 
-/* KPI CARDS */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:20px}
-.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-color,var(--border))}
-.kpi.accent{--kpi-color:var(--accent)}.kpi.warn{--kpi-color:var(--warn)}.kpi.danger{--kpi-color:var(--danger)}.kpi.success{--kpi-color:var(--success)}.kpi.purple{--kpi-color:var(--purple)}
-.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
-.kpi-value{font-size:21px;font-weight:600;font-family:var(--mono);color:var(--kpi-color,var(--text))}
-.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
+/* ── KPI CARDS ──────────────────────────────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+  position:relative;overflow:hidden;border-top:2px solid var(--kpi-color,var(--border2))}
+.kpi.gold{--kpi-color:var(--gold)}.kpi.warn{--kpi-color:var(--warn)}.kpi.red{--kpi-color:var(--red)}
+.kpi.green{--kpi-color:var(--green)}.kpi.blue{--kpi-color:var(--blue)}
+.kpi.usd{--kpi-color:#22c55e;border-top-color:#22c55e;border-color:rgba(34,197,94,.2)}
+.kpi.zig{--kpi-color:#c084fc;border-top-color:#c084fc;border-color:rgba(192,132,252,.2)}
+.kpi-usd-val{color:#22c55e!important}.kpi-zig-val{color:#c084fc!important}
+.curr-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:4px;
+  font-size:8px;font-weight:700;padding:1px 5px;letter-spacing:.04em;flex-shrink:0}
+.curr-usd{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.curr-zig{background:rgba(192,132,252,.15);color:#c084fc;border:1px solid rgba(192,132,252,.3)}
+.kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.kpi-value{font-size:20px;font-weight:600;font-family:var(--mono);color:var(--kpi-color,var(--text))}
+.kpi-sub{font-size:9px;color:var(--muted);margin-top:2px}
 
-/* CHARTS */
-.chart-grid{display:grid;gap:14px;margin-bottom:20px}
-.chart-grid-2{grid-template-columns:1fr 1fr}
-.chart-grid-3{grid-template-columns:2fr 1fr}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
-.chart-title{font-size:12px;font-weight:600;margin-bottom:4px;color:var(--text)}
-.chart-sub{font-size:11px;color:var(--muted);margin-bottom:14px}
-.chart-wrap{position:relative}
+/* ── CHARTS ─────────────────────────────────────────────────────────────── */
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.chart-grid-3{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:18px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+.chart-title{font-size:11px;font-weight:600;margin-bottom:3px;color:var(--text)}
+.chart-sub{font-size:10px;color:var(--muted);margin-bottom:12px}
 
-/* RISK */
-.risk-score-circle{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;border:2px solid;font-weight:700;font-size:14px;font-family:var(--mono);flex-shrink:0}
-.risk-low{border-color:var(--risk-low);color:var(--risk-low);background:rgba(34,197,94,.07)}
+/* ── TABLE ──────────────────────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.08em;
+   text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border2);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--faint);vertical-align:middle}
+tr:hover td{background:rgba(200,150,12,.03)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap}
+.b-draft{background:rgba(107,114,128,.2);color:#9ca3af}
+.b-submitted{background:rgba(74,144,217,.15);color:#70B0F0}
+.b-verified{background:rgba(245,158,11,.15);color:var(--warn)}
+.b-approved{background:rgba(61,204,120,.15);color:var(--green)}
+.b-scheduled{background:rgba(155,111,224,.15);color:#c084fc}
+.b-partial{background:rgba(251,146,60,.15);color:#fb923c}
+.b-paid{background:rgba(61,204,120,.12);color:var(--green)}
+.b-rejected{background:rgba(224,80,80,.12);color:var(--red)}
+.b-local{background:rgba(200,150,12,.15);color:var(--gl)}
+.b-zcdc{background:rgba(74,144,217,.15);color:#70B0F0}
+
+/* ── RISK ────────────────────────────────────────────────────────────────── */
+.risk-circle{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  width:50px;height:50px;border-radius:50%;border:2px solid;font-weight:700;font-size:13px;
+  font-family:var(--mono);flex-shrink:0}
+.risk-low{border-color:var(--risk-low);color:var(--risk-low);background:rgba(61,204,120,.07)}
 .risk-medium{border-color:var(--risk-medium);color:var(--risk-medium);background:rgba(245,158,11,.07)}
-.risk-high{border-color:var(--risk-high);color:var(--risk-high);background:rgba(239,68,68,.07)}
+.risk-high{border-color:var(--risk-high);color:var(--risk-high);background:rgba(224,80,80,.07)}
 .risk-critical{border-color:var(--risk-critical);color:var(--risk-critical);background:rgba(220,38,38,.12)}
-.risk-bar-wrap{flex:1;min-width:0}
-.risk-bar-bg{height:6px;background:var(--faint);border-radius:3px;margin-top:6px;overflow:hidden}
-.risk-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
-.risk-vendor-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--faint)}
-.risk-vendor-row:last-child{border-bottom:none}
-.risk-vendor-name{font-weight:500;font-size:13px}
-.risk-vendor-meta{font-size:11px;color:var(--muted);margin-top:1px}
-.alert-banner{border-radius:10px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px;font-size:12px}
-.alert-critical{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.25);color:#fca5a5}
-.alert-high{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#fca5a5}
-.alert-medium{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#fde68a}
-.alert-icon{font-size:16px;flex-shrink:0}
+.risk-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--faint)}
+.risk-row:last-child{border-bottom:none}
+.risk-bar-bg{height:5px;background:var(--faint);border-radius:3px;margin-top:4px;overflow:hidden;flex:1}
+.risk-bar-fill{height:100%;border-radius:3px;transition:width .6s}
 
-/* PROJECTION */
-.proj-week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:14px}
-.proj-week{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
-.proj-week-label{font-size:10px;color:var(--muted);margin-bottom:4px}
-.proj-week-total{font-size:14px;font-weight:600;font-family:var(--mono);color:var(--accent)}
-.proj-week-sched{font-size:10px;color:var(--accent2)}
-.proj-week-proj{font-size:10px;color:var(--warn)}
-.proj-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-.proj-summary-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
-.proj-summary-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
-.proj-summary-value{font-size:18px;font-weight:600;font-family:var(--mono)}
+/* ── FORMS ───────────────────────────────────────────────────────────────── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.card-title{font-size:12px;font-weight:600;color:var(--gl);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.fg{margin-bottom:.8rem}
+.fg label{display:block;font-size:.68rem;font-weight:600;color:var(--muted);letter-spacing:.09em;
+  text-transform:uppercase;margin-bottom:.3rem}
+.fg input,.fg select,.fg textarea{width:100%;background:#111100;border:1px solid var(--border2);
+  border-radius:8px;padding:.6rem .85rem;color:var(--text);font-family:var(--font);font-size:.85rem;
+  outline:none;transition:border-color .2s;resize:vertical}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold)}
+.fg select option{background:#111100}
+.btn{padding:.55rem 1.1rem;border:none;border-radius:8px;cursor:pointer;font-family:var(--font);
+  font-size:.82rem;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:.4rem}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gl));color:#000}
+.btn-gold:hover{opacity:.88}
+.btn-out{background:transparent;border:1px solid var(--border2);color:var(--muted)}
+.btn-out:hover{border-color:var(--gold);color:var(--gl)}
+.btn-red{background:rgba(224,80,80,.15);border:1px solid rgba(224,80,80,.3);color:var(--red)}
+.btn-green{background:rgba(61,204,120,.15);border:1px solid rgba(61,204,120,.3);color:var(--green)}
+.btn-sm{padding:.35rem .75rem;font-size:.75rem}
+.toolbar{display:flex;gap:.5rem;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.filter-select{background:#111100;border:1px solid var(--border2);border-radius:7px;
+  padding:.38rem .7rem;color:var(--text);font-size:.78rem;font-family:var(--font);outline:none;cursor:pointer}
+.search-in{background:#111100;border:1px solid var(--border2);border-radius:7px;
+  padding:.38rem .8rem;color:var(--text);font-size:.78rem;font-family:var(--font);outline:none;width:200px}
+.search-in::placeholder{color:var(--muted)}
 
-/* TABLES */
-.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
-.table-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.table-title{font-weight:600;font-size:13px;flex-shrink:0}
-.table-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:500px}
-th{text-align:left;padding:9px 14px;font-size:9px;font-weight:600;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface);white-space:nowrap}
-td{padding:9px 14px;border-bottom:1px solid var(--faint);font-size:12px;vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.015)}
+/* ── MODAL ───────────────────────────────────────────────────────────────── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;
+  align-items:center;justify-content:center;z-index:1000}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:16px;
+  padding:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-title{font-size:14px;font-weight:600;color:var(--gl);margin-bottom:16px;
+  padding-bottom:10px;border-bottom:1px solid var(--border)}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-size:18px;line-height:1}
+.modal-close:hover{color:var(--red)}
 
-/* BADGES */
-.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;letter-spacing:.02em}
-.badge-draft{background:rgba(107,122,153,.15);color:var(--muted)}
-.badge-submitted{background:rgba(245,158,11,.12);color:var(--warn)}
-.badge-verified{background:rgba(79,142,247,.12);color:var(--accent)}
-.badge-approved{background:rgba(34,211,165,.12);color:var(--accent2)}
-.badge-rejected{background:rgba(239,68,68,.12);color:var(--danger)}
-.badge-scheduled{background:rgba(167,139,250,.13);color:var(--purple)}
-.badge-partial{background:rgba(245,158,11,.13);color:var(--warn)}
-.badge-paid{background:rgba(34,197,94,.12);color:var(--success)}
-.badge-0-30{background:rgba(34,197,94,.1);color:var(--success)}
-.badge-31-60{background:rgba(245,158,11,.1);color:var(--warn)}
-.badge-61-90{background:rgba(251,146,60,.1);color:var(--orange)}
-.badge-91{background:rgba(239,68,68,.12);color:var(--danger)}
-.badge-bank{background:rgba(79,142,247,.1);color:var(--accent)}
-.badge-eco{background:rgba(34,211,165,.1);color:var(--accent2)}
-.badge-cash{background:rgba(167,139,250,.1);color:var(--purple)}
-.badge-risk-low{background:rgba(34,197,94,.12);color:var(--success)}
-.badge-risk-medium{background:rgba(245,158,11,.12);color:var(--warn)}
-.badge-risk-high{background:rgba(239,68,68,.12);color:var(--danger)}
-.badge-risk-critical{background:rgba(220,38,38,.18);color:#fca5a5;border:1px solid rgba(220,38,38,.3)}
+/* ── TOAST ───────────────────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:.8rem 1.2rem;border-radius:10px;
+  font-size:.83rem;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);max-width:320px;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:rgba(61,204,120,.95);color:#000}
+.toast.error{background:rgba(224,80,80,.95);color:#fff}
+.toast.info{background:rgba(200,150,12,.95);color:#000}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:none;font-family:var(--font);white-space:nowrap}
-.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#3a7ce8}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
-.btn-danger{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2)}
-.btn-success{background:rgba(34,197,94,.1);color:var(--success);border:1px solid rgba(34,197,94,.2)}
-.btn-sm{padding:4px 9px;font-size:11px;border-radius:5px}
-
-/* FORMS & MODALS */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s}
-.overlay.open{opacity:1;pointer-events:all}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;padding:26px;transform:translateY(10px);transition:transform .2s}
-.overlay.open .modal{transform:translateY(0)}
-.modal-lg{max-width:700px}
-.modal-title{font-size:16px;font-weight:600;margin-bottom:4px}
-.modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
-.modal-footer{margin-top:18px;display:flex;gap:8px;justify-content:flex-end}
-.field{margin-bottom:13px}
-.field label{display:block;font-size:10px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em}
-.field input,.field select,.field textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s}
-.field input:focus,.field select:focus{border-color:var(--accent)}
-.field select option{background:var(--card)}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* FILTER BAR */
-.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-.filter-bar select,.filter-bar input{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font);outline:none}
-.filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
-.search-inp{min-width:180px}
-
-/* TIMELINE */
-.tl-item{display:flex;gap:10px;padding:6px 0;position:relative}
-.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0}
-.tl-dot.rejected{background:var(--danger)}.tl-dot.paid{background:var(--success)}
-.tl-line{position:absolute;left:3px;top:17px;bottom:-6px;width:1px;background:var(--border)}
-.tl-item:last-child .tl-line{display:none}
-.tl-action{font-size:12px;font-weight:500}
-.tl-meta{font-size:11px;color:var(--muted)}
-
-/* MONTH GROUP */
-.month-group{margin-bottom:18px}
-.month-heading{font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.09em;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:8px}
-
-/* TOAST */
-.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:6px;z-index:2000}
-.toast{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 15px;font-size:12px;min-width:200px;animation:slideup .2s;display:flex;align-items:center;gap:8px}
-.toast.success{border-color:rgba(34,197,94,.3);color:var(--success)}
-.toast.error{border-color:rgba(239,68,68,.3);color:var(--danger)}
-@keyframes slideup{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-.amount{font-family:var(--mono);font-size:12px}
-.empty{text-align:center;color:var(--muted);padding:28px;font-size:12px}
-.divider{height:1px;background:var(--border);margin:16px 0}
-.section-title{font-size:13px;font-weight:600;margin-bottom:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-
-/* WORKING CAPITAL METRICS */
-.wc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px}
-.wc-metric{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center}
-.wc-value{font-size:26px;font-weight:600;font-family:var(--mono);color:var(--accent2)}
-.wc-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
-.wc-hint{font-size:10px;color:var(--muted);margin-top:3px;font-style:italic}
-
-/* REJECTION CARDS */
-.rej-card{background:var(--surface);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:12px 14px;margin-bottom:8px}
-.rej-vendor{font-weight:600;font-size:13px}
-.rej-reason{font-size:11px;color:var(--danger);margin-top:3px}
-.rej-meta{font-size:10px;color:var(--muted);margin-top:3px}
-
-/* VENDOR DETAIL */
-.vd-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
-.vd-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.vd-avatar{width:42px;height:42px;border-radius:10px;background:rgba(79,142,247,.12);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--accent)}
-.vd-name{font-size:15px;font-weight:600}
-.vd-meta{font-size:11px;color:var(--muted);margin-top:2px}
-.vd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
-.vd-item .dl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-.vd-item .dv{font-size:13px;margin-top:2px;font-family:var(--mono)}
+/* ── MISC ─────────────────────────────────────────────────────────────────── */
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:.83rem}
+.export-bar{display:flex;gap:.5rem;align-items:center;margin-bottom:12px}
+.kpi-tracker{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:18px}
+.kpi-t{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.kpi-t-name{font-size:.75rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.kpi-t-val{font-size:1.4rem;font-weight:700;font-family:var(--mono)}
+.kpi-t-target{font-size:.7rem;color:var(--muted);margin-top:2px}
+.kpi-t-bar{height:4px;border-radius:2px;background:var(--faint);margin-top:6px;overflow:hidden}
+.kpi-t-fill{height:100%;border-radius:2px}
+.kpi-green .kpi-t-val,.kpi-green .kpi-t-fill{color:var(--green);background:var(--green)}
+.kpi-amber .kpi-t-val,.kpi-amber .kpi-t-fill{color:var(--warn);background:var(--warn)}
+.kpi-red .kpi-t-val,.kpi-red .kpi-t-fill{color:var(--red);background:var(--red)}
+.kpi-info .kpi-t-val,.kpi-info .kpi-t-fill{color:var(--blue);background:var(--blue)}
+.notif-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;
+  border-bottom:1px solid var(--faint)}
+.notif-row:last-child{border-bottom:none}
+.rank-num{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--gl);
+  width:32px;text-align:center;flex-shrink:0}
+@media(max-width:800px){aside{display:none}.content{padding:12px}
+  .chart-grid-2,.chart-grid-3,.form-row,.form-row-3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- LOGIN PAGE -->
-<div class="login-wrap" id="login-page">
-  <div class="login-box">
-    <div class="login-logo">
-      <div class="login-mark">ZCDC</div>
-      <div class="login-title">Vendor Payables Intelligence</div>
-      <div class="login-sub">Financial Operations &amp; Risk Control System</div>
+<!-- ══ AUTH SCREEN ══ -->
+<div class="auth-wrap" id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <img src="data:image/jpeg;base64,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" alt="ZCDC Logo" style="width:160px;height:auto;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;filter:drop-shadow(0 2px 8px rgba(201,150,12,.25))">
+      <div class="auth-mark">Zimbabwe Consolidated Diamond Company</div>
+      <div class="auth-title">Vendor Tracking System</div>
+      <div class="auth-sub">Payables Intelligence &amp; Compliance Platform</div>
     </div>
-    <div class="field"><label>Username</label><input id="login-user" placeholder="e.g. finance_manager_alice" autocomplete="username"></div>
-    <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="Password"></div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px 0" onclick="doLogin()">Sign In →</button>
-    <div id="login-err" style="color:var(--danger);font-size:12px;margin-top:10px;text-align:center;display:none"></div>
-    <div class="login-users">
-      <strong>finance_manager_alice</strong> / admin123 — Finance Manager<br>
-      <strong>fin_officer_tom</strong> / officer123 — Finance Officer<br>
-      <strong>clerk_jane</strong> / clerk123 — Clerk<br>
-      <strong>treasury_officer_sue</strong> / treasury123 — Treasury
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="authTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="authTab('register')">Create Account</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-form active" id="af-login">
+      <div class="fld"><label>Mine Number</label>
+        <input type="text" id="l-user" placeholder="Enter your mine number (e.g. ZC-001)" autocomplete="username" style="text-transform:uppercase"></div>
+      <div class="fld"><label>4-Digit PIN</label>
+        <input type="password" id="l-pass" placeholder="Enter 4-digit PIN" maxlength="4" inputmode="numeric" pattern="[0-9]{4}"></div>
+      <button class="auth-btn" onclick="doLogin()">Sign In →</button>
+      <div class="auth-err" id="l-err"></div>
+      <div class="auth-hint">
+        <strong>Demo accounts (Mine Number / PIN):</strong><br>
+        FM_ALICE / admin123 — Finance Manager<br>
+        CFO_JAMES / cfo123 — Chief Finance Officer<br>
+        CLERK_JANE / clerk123 — CM Clerk<br>
+        TREASURY_SUE / treasury123 — Treasury Officer
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="auth-form" id="af-register">
+      <div class="fld"><label>Full Name</label>
+        <input type="text" id="r-fullname" placeholder="e.g. John Moyo"></div>
+      <div class="fld"><label>Mine Number *</label>
+        <input type="text" id="r-user" placeholder="e.g. ZC-001 or EMP-2024" style="text-transform:uppercase"></div>
+      <div class="fld"><label>4-Digit PIN *</label>
+        <input type="password" id="r-pass" placeholder="Choose a 4-digit PIN (e.g. 1234)" maxlength="4" inputmode="numeric" pattern="[0-9]{4}"></div>
+      <div class="fld"><label>Confirm PIN *</label>
+        <input type="password" id="r-pass2" placeholder="Repeat your 4-digit PIN" maxlength="4" inputmode="numeric" pattern="[0-9]{4}"></div>
+      <div class="fld"><label>Role *</label>
+        <select id="r-role">
+          <option value="">Select role…</option>
+          <option>Chief Finance Officer</option>
+          <option>Finance Manager</option>
+          <option>Assistant Finance Manager</option>
+          <option>Cost and Management Accountant</option>
+          <option>Assistant Cost and Management Accountant</option>
+          <option>Cost and Management Clerk</option>
+          <option>Receiving Clerk</option>
+          <option>Treasury Officer</option>
+        </select>
+      </div>
+      <div class="fld"><label>Work Email (optional)</label>
+        <input type="email" id="r-email" placeholder="yourname@zcdc.co.zw"></div>
+      <button class="auth-btn" onclick="doRegister()">Create Account →</button>
+      <div class="auth-err" id="r-err"></div>
     </div>
   </div>
 </div>
 
-<!-- APP SHELL -->
+<!-- ══ APP SHELL ══ -->
 <div class="app" id="app">
   <aside>
     <div class="logo">
       <div class="logo-mark">ZCDC</div>
-      <div class="logo-name">Payables Intelligence</div>
-      <div class="logo-sub">Financial Operations System</div>
+      <div class="logo-name">Vendor Tracking</div>
+      <div class="logo-sub">Payables Intelligence</div>
     </div>
     <nav>
-      <div class="nav-section">Overview</div>
-      <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">▦</span>Dashboard</div>
+      <div class="nav-sec">Overview</div>
+      <div class="nav-item active" onclick="show('dashboard')"><span class="nav-icon">◉</span> Dashboard</div>
 
-      <div class="nav-section">Analytics</div>
-      <div class="nav-item" onclick="nav('risk',this)"><span class="nav-icon">⚠</span>Vendor Risk</div>
-      <div class="nav-item" onclick="nav('cashflow',this)"><span class="nav-icon">◈</span>Cash Projection</div>
-      <div class="nav-item" onclick="nav('wc',this)"><span class="nav-icon">◉</span>Working Capital</div>
-      <div class="nav-item" onclick="nav('performance',this)"><span class="nav-icon">◆</span>Pay Performance</div>
+      <div class="nav-item" onclick="show('ranking')"><span class="nav-icon">🏆</span> Vendor Ranking</div>
 
-      <div class="nav-section">Records</div>
-      <div class="nav-item" onclick="nav('vendors',this)"><span class="nav-icon">◈</span>Vendors</div>
-      <div class="nav-item" onclick="nav('invoices',this)"><span class="nav-icon">◉</span>Invoices</div>
-      <div class="nav-item" onclick="nav('batches',this)"><span class="nav-icon">◐</span>Payment Batches</div>
+      <div class="nav-sec">Vendors</div>
+      <div class="nav-item" onclick="show('vendors')"><span class="nav-icon">🏢</span> All Vendors</div>
+      <div class="nav-item" onclick="show('add-vendor')"><span class="nav-icon">➕</span> Add Vendor</div>
 
-      <div class="nav-section">Reports</div>
-      <div class="nav-item" onclick="nav('outstanding',this)"><span class="nav-icon">▸</span>Outstanding</div>
-      <div class="nav-item" onclick="nav('aging',this)"><span class="nav-icon">◇</span>Aging Analysis</div>
-      <div class="nav-item" onclick="nav('backlog',this)"><span class="nav-icon">▷</span>Approval Backlog</div>
-      <div class="nav-item" onclick="nav('rejections',this)"><span class="nav-icon">✕</span>Rejections</div>
-      <div class="nav-item" onclick="nav('schedule',this)"><span class="nav-icon">▸</span>Pay Schedule</div>
-      <div class="nav-item" onclick="nav('monthly',this)"><span class="nav-icon">≡</span>Monthly Summary</div>
+      <div class="nav-sec">Invoices</div>
+      <div class="nav-item" onclick="show('invoices')"><span class="nav-icon">📄</span> All Invoices</div>
+      <div class="nav-item" onclick="show('add-invoice')"><span class="nav-icon">✏️</span> Add Invoice</div>
+      <div class="nav-item" onclick="show('tax-invoices')"><span class="nav-icon">🧾</span> Tax Invoices</div>
+
+      <div class="nav-sec">Payments</div>
+      <div class="nav-item" onclick="show('batches')"><span class="nav-icon">💳</span> Payment Batches</div>
+      <div class="nav-item" onclick="show('schedule')"><span class="nav-icon">📅</span> Payment Schedule</div>
+
+      <div class="nav-sec">Analytics</div>
+      <div class="nav-item" onclick="show('risk')"><span class="nav-icon">⚠️</span> Risk Scorecard</div>
+      <div class="nav-item" onclick="show('projection')"><span class="nav-icon">📈</span> Cash Projection</div>
+      <div class="nav-item" onclick="show('working-capital')"><span class="nav-icon">💹</span> Working Capital</div>
+      <div class="nav-item" onclick="show('aging')"><span class="nav-icon">⏳</span> Aging Report</div>
+
+      <div class="nav-sec">Reports</div>
+      <div class="nav-item" onclick="show('reports')"><span class="nav-icon">📋</span> Outstanding Report</div>
+      <div class="nav-item" onclick="show('rejections')"><span class="nav-icon">❌</span> Rejections</div>
+      <div class="nav-item" onclick="show('monthly')"><span class="nav-icon">📆</span> Monthly Summary</div>
+      <div class="nav-item" onclick="show('notifications')"><span class="nav-icon">🔔</span> Notifications</div>
     </nav>
-    <button class="nav-logout" onclick="doLogout()">⏻ Sign Out</button>
+    <div class="aside-footer">
+      <div id="sb-user" style="font-size:10px;color:var(--muted);margin-bottom:6px;padding:0 4px"></div>
+      <button class="logout-btn" onclick="doLogout()">⇠ Sign Out</button>
+    </div>
   </aside>
 
   <main>
     <div class="topbar">
-      <div class="topbar-left">
-        <div class="page-title" id="page-title">Dashboard</div>
-        <div class="page-sub" id="page-sub">Financial operations overview</div>
-      </div>
+      <div><div class="page-title" id="pg-title">Dashboard</div>
+        <div class="page-sub" id="pg-sub">ZCDC Vendor Payables Intelligence</div></div>
       <div class="user-pill">
-        <div class="avatar" id="u-init">FA</div>
-        <div><div class="user-name" id="u-name">—</div><div class="user-role" id="u-role">—</div></div>
+        <div class="avatar" id="topbar-av">?</div>
+        <span class="user-name" id="topbar-name">—</span>
+        <span class="user-role" id="topbar-role" style="color:var(--muted)">—</span>
       </div>
     </div>
-
+    <!-- Role Access Banner -->
+    <div id="role-banner" style="display:none;background:rgba(200,150,12,.07);border-bottom:1px solid rgba(200,150,12,.2);
+      padding:7px 22px;font-size:11px;color:var(--gl);align-items:center;gap:8px;flex-shrink:0"></div>
     <div class="content">
 
-      <!-- ══ DASHBOARD ══════════════════════════════════════════════════════ -->
-      <section id="sec-dashboard" class="section active">
-        <div class="kpi-grid" id="dash-kpis"></div>
-        <!-- Risk alerts strip -->
-        <div id="dash-alerts" style="margin-bottom:16px"></div>
-        <!-- Charts row -->
-        <div class="chart-grid chart-grid-3" style="margin-bottom:16px">
-          <div class="chart-card">
-            <div class="chart-title">AP Aging Distribution</div>
-            <div class="chart-sub">Outstanding balance by age bucket</div>
-            <div class="chart-wrap" style="height:200px"><canvas id="chart-aging-bar"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-title">Status Breakdown</div>
-            <div class="chart-sub">Invoice count by status</div>
-            <div class="chart-wrap" style="height:200px"><canvas id="chart-status-pie"></canvas></div>
-          </div>
-        </div>
-        <!-- Recent invoices -->
-        <div class="table-wrap">
-          <div class="table-header">
-            <span class="table-title">Recent Invoices</span>
-            <button class="btn btn-primary btn-sm" onclick="openModal('modal-invoice');populateVendorSelects()">+ New Invoice</button>
-          </div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Invoice #</th><th>Vendor</th><th>Date</th><th>Amount</th><th>Outstanding</th><th>Status</th><th>Age</th>
-          </tr></thead><tbody id="dash-invoices"></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- ══ VENDOR RISK ════════════════════════════════════════════════════ -->
-      <section id="sec-risk" class="section">
-        <div class="kpi-grid" id="risk-kpis"></div>
-        <div id="risk-alerts" style="margin-bottom:14px"></div>
-        <div class="chart-grid chart-grid-2" style="margin-bottom:16px">
-          <div class="chart-card">
-            <div class="chart-title">Risk Score by Vendor</div>
-            <div class="chart-sub">0 = Low risk · 100 = Critical risk</div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chart-risk-bar"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-title">Risk Distribution</div>
-            <div class="chart-sub">Vendors by risk category</div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chart-risk-pie"></canvas></div>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Vendor Risk Scorecard</span></div>
-          <div id="risk-rows"></div>
-        </div>
-      </section>
-
-      <!-- ══ CASH PROJECTION ════════════════════════════════════════════════ -->
-      <section id="sec-cashflow" class="section">
-        <div class="proj-summary" id="proj-summary"></div>
-        <div class="chart-card" style="margin-bottom:16px">
-          <div class="chart-title">13-Week Cash Requirement Forecast</div>
-          <div class="chart-sub">Firm scheduled payments + projected approved payables</div>
-          <div class="chart-wrap" style="height:260px"><canvas id="chart-cashflow"></canvas></div>
-        </div>
-        <div class="chart-card" style="margin-bottom:16px">
-          <div class="chart-title">Cumulative Cash Requirement</div>
-          <div class="chart-sub">Running total over 90 days</div>
-          <div class="chart-wrap" style="height:200px"><canvas id="chart-cumulative"></canvas></div>
-        </div>
-        <div class="section-title">Weekly Breakdown</div>
-        <div class="proj-week-grid" id="proj-weeks"></div>
-      </section>
-
-      <!-- ══ WORKING CAPITAL ════════════════════════════════════════════════ -->
-      <section id="sec-wc" class="section">
-        <div class="wc-grid" id="wc-metrics"></div>
-        <div class="chart-grid chart-grid-2" style="margin-bottom:16px">
-          <div class="chart-card">
-            <div class="chart-title">Payment Velocity Trend</div>
-            <div class="chart-sub">Monthly invoiced vs paid</div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chart-velocity"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-title">Cost Centre Exposure</div>
-            <div class="chart-sub">Outstanding by cost centre</div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chart-cc"></canvas></div>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Cost Centre Outstanding Breakdown</span></div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>CC #</th><th>Cost Centre</th><th>Open Invoices</th><th>Total Invoiced</th><th>Outstanding</th>
-          </tr></thead><tbody id="cc-table"></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- ══ PAYMENT PERFORMANCE ════════════════════════════════════════════ -->
-      <section id="sec-performance" class="section">
-        <div class="kpi-grid" id="perf-kpis"></div>
-        <div class="chart-card" style="margin-bottom:16px">
-          <div class="chart-title">On-Time vs Late Payments</div>
-          <div class="chart-sub">Based on vendor payment terms</div>
-          <div class="chart-wrap" style="height:220px"><canvas id="chart-perf-pie"></canvas></div>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Worst Performing Vendors (Late Payments)</span></div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Vendor</th><th>Late Payments</th>
-          </tr></thead><tbody id="perf-worst"></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- ══ VENDORS ════════════════════════════════════════════════════════ -->
-      <section id="sec-vendors" class="section">
-        <div class="filter-bar">
-          <input class="search-inp" id="v-search" placeholder="Search vendor, account, ecocash…" oninput="loadVendors()">
-          <select id="v-month" onchange="loadVendors()"><option value="">All Months</option></select>
-          <div style="flex:1"></div>
-          <button class="btn btn-primary" onclick="openModal('modal-vendor')">+ Add Vendor</button>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Vendor Master</span></div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Name</th><th>Category</th><th>Method</th><th>Bank Account</th><th>EcoCash</th><th>Terms</th><th>Month Added</th><th></th>
-          </tr></thead><tbody id="vendors-tbl"></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- ══ INVOICES ═══════════════════════════════════════════════════════ -->
-      <section id="sec-invoices" class="section">
-        <div class="filter-bar">
-          <input class="search-inp" id="i-search" placeholder="Invoice # or vendor…" oninput="loadInvoices()">
-          <select id="i-status" onchange="loadInvoices()">
-            <option value="">All Statuses</option>
-            <option>Draft</option><option>Submitted</option><option>Verified</option>
-            <option>Approved</option><option>Rejected</option><option>Scheduled</option>
-            <option>Partially Paid</option><option>Paid</option>
-          </select>
-          <select id="i-month" onchange="loadInvoices()"><option value="">All Months</option></select>
-          <div style="flex:1"></div>
-          <button class="btn btn-primary" onclick="openModal('modal-invoice');populateVendorSelects()">+ New Invoice</button>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Invoice Register</span></div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Invoice #</th><th>Vendor</th><th>Month</th><th>CC #</th><th>Total</th><th>Outstanding</th><th>Status</th><th>Risk Age</th><th>Actions</th>
-          </tr></thead><tbody id="invoices-tbl"></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- ══ BATCHES ════════════════════════════════════════════════════════ -->
-      <section id="sec-batches" class="section">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-          <button class="btn btn-primary" onclick="openModal('modal-batch')">+ New Batch</button>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Payment Batches</span></div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Reference</th><th>Scheduled Date</th><th>Invoices</th><th>Vendors</th><th>Total Scheduled</th><th>Created By</th><th></th>
-          </tr></thead><tbody id="batches-tbl"></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- ══ OUTSTANDING ════════════════════════════════════════════════════ -->
-      <section id="sec-outstanding" class="section">
-        <div class="filter-bar">
-          <select id="out-month" onchange="loadOutstanding()"><option value="">All Months</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="loadOutstanding()">↻</button>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Vendor Outstanding Summary</span></div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Vendor</th><th>Category</th><th>Method</th><th>Account / EcoCash</th><th>Invoices</th><th>Outstanding</th>
-          </tr></thead><tbody id="out-tbl"></tbody><tfoot><tr id="out-foot"></tr></tfoot></table></div>
-        </div>
-      </section>
-
-      <!-- ══ AGING ══════════════════════════════════════════════════════════ -->
-      <section id="sec-aging" class="section">
-        <div class="filter-bar">
-          <select id="age-month" onchange="loadAging()"><option value="">All Months</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="loadAging()">↻</button>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">AP Aging Analysis (from Invoice Date)</span></div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Vendor</th><th>0–30 days</th><th>31–60 days</th><th>61–90 days</th><th>91+ days</th><th>Total</th>
-          </tr></thead><tbody id="aging-tbl"></tbody><tfoot><tr id="aging-foot"></tr></tfoot></table></div>
-        </div>
-      </section>
-
-      <!-- ══ BACKLOG ═════════════════════════════════════════════════════════ -->
-      <section id="sec-backlog" class="section">
-        <div class="filter-bar">
-          <select id="bl-month" onchange="loadBacklog()"><option value="">All Months</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="loadBacklog()">↻</button>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Approval Backlog</span></div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Invoice #</th><th>Vendor</th><th>Month</th><th>CC #</th><th>Amount</th><th>Status</th><th>Actions</th>
-          </tr></thead><tbody id="backlog-tbl"></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- ══ REJECTIONS ══════════════════════════════════════════════════════ -->
-      <section id="sec-rejections" class="section">
-        <div class="filter-bar">
-          <select id="rej-month" onchange="loadRejections()"><option value="">All Months</option></select>
-        </div>
-        <div id="rej-content"></div>
-      </section>
-
-      <!-- ══ SCHEDULE ════════════════════════════════════════════════════════ -->
-      <section id="sec-schedule" class="section">
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Upcoming Payment Schedule</span>
-            <button class="btn btn-ghost btn-sm" onclick="loadSchedule()">↻</button>
-          </div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Batch</th><th>Date</th><th>Vendor</th><th>Invoice #</th><th>Method</th><th>Account</th><th>Amount</th>
-          </tr></thead><tbody id="sched-tbl"></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- ══ MONTHLY ══════════════════════════════════════════════════════════ -->
-      <section id="sec-monthly" class="section">
-        <div class="chart-card" style="margin-bottom:16px">
-          <div class="chart-title">Monthly Invoice &amp; Payment Activity</div>
-          <div class="chart-sub">Total invoiced vs paid per month</div>
-          <div class="chart-wrap" style="height:220px"><canvas id="chart-monthly"></canvas></div>
-        </div>
-        <div class="table-wrap">
-          <div class="table-header"><span class="table-title">Monthly Summary</span></div>
-          <div class="table-scroll"><table><thead><tr>
-            <th>Month</th><th>Invoices</th><th>Total Invoiced</th><th>Paid</th><th>Outstanding</th><th>Rejected</th>
-          </tr></thead><tbody id="monthly-tbl"></tbody></table></div>
-        </div>
-      </section>
-
-    </div><!-- /content -->
-  </main>
+<!-- ══ DASHBOARD ══ -->
+<div class="section active" id="s-dashboard">
+  <div class="kpi-grid" id="kpi-row"></div>
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Top Vendors by Outstanding</div>
+      <div class="chart-sub">Amount owed to each supplier</div>
+      <canvas id="ch-top" height="180"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Invoice Status Breakdown</div>
+      <div class="chart-sub">Current pipeline status</div>
+      <canvas id="ch-status" height="180"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">⚡ Quick Actions</div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <button class="btn btn-gold" id="qa-add-invoice" onclick="if(canDo('can_create_invoice'))show('add-invoice')">✏️ Add Invoice</button>
+      <button class="btn btn-out" id="qa-add-vendor" onclick="if(canDo('can_add_vendor'))show('add-vendor')">🏢 Add Vendor</button>
+      <button class="btn btn-out" id="qa-tax-invoice" onclick="if(canDo('can_create_invoice'))show('tax-invoices')">🧾 Tax Invoice</button>
+      <button class="btn btn-out" id="qa-batch" onclick="if(canDo('can_create_batch'))show('batches')">💳 Create Batch</button>
+      <button class="btn btn-out" onclick="exportCSV('invoices')">⬇ Export Invoices</button>
+      <button class="btn btn-out" onclick="exportCSV('outstanding')">⬇ Export Outstanding</button>
+    </div>
+  </div>
 </div>
 
-<!-- ══ MODALS ══════════════════════════════════════════════════════════════ -->
-
-<div class="overlay" id="modal-vendor">
-  <div class="modal">
-    <div class="modal-title">Add Vendor</div><div class="modal-sub">Register a new local vendor</div>
-    <div class="field"><label>Vendor Name *</label><input id="vn-name" placeholder="Company name"></div>
-    <div class="field-row">
-      <div class="field"><label>Category *</label><select id="vn-cat"><option>Supplies</option><option>Services</option><option>Other</option></select></div>
-      <div class="field"><label>Payment Terms (days)</label><input id="vn-terms" type="number" value="30"></div>
-    </div>
-    <div class="field"><label>Payment Method *</label>
-      <select id="vn-method" onchange="togglePayFields()">
-        <option value="Bank">Bank Transfer</option><option value="EcoCash">EcoCash</option><option value="Cash">Cash</option><option value="Cheque">Cheque</option>
-      </select>
-    </div>
-    <div id="bank-fields">
-      <div class="field-row">
-        <div class="field"><label>Bank Name</label><input id="vn-bank" placeholder="e.g. CABS, ZB"></div>
-        <div class="field"><label>Bank Account Number</label><input id="vn-acc" placeholder="Account #"></div>
+<!-- ══ KPIs ══ -->
+<div class="section" id="s-kpis">
+  <div class="kpi-tracker" id="kpi-tracker"></div>
+  <div class="card">
+    <div class="card-title">📌 SOP Compliance — Payment Notification</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">Send email notifications to suppliers and internal stakeholders for payment events.</div>
+    <div class="form-row">
+      <div class="fg"><label>Notification Type</label>
+        <select id="notif-type">
+          <option value="payment_reminder">Payment Reminder</option>
+          <option value="invoice_approved">Invoice Approved</option>
+          <option value="payment_made">Payment Made</option>
+          <option value="invoice_rejected">Invoice Rejected</option>
+          <option value="batch_scheduled">Batch Scheduled</option>
+        </select>
+      </div>
+      <div class="fg"><label>Target</label>
+        <select id="notif-target">
+          <option value="all">All Stakeholders</option>
+          <option value="vendor">Vendors Only</option>
+          <option value="FM">Finance Manager</option>
+          <option value="Clerk">Clerks</option>
+        </select>
       </div>
     </div>
-    <div id="eco-fields" style="display:none">
-      <div class="field"><label>EcoCash Number</label><input id="vn-eco" placeholder="e.g. 0771234567"></div>
+    <div class="fg"><label>Message</label>
+      <textarea id="notif-msg" rows="2" placeholder="Enter notification message..."></textarea></div>
+    <button class="btn btn-gold" onclick="sendNotification()">📧 Send Notification</button>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Notification Log</div>
+    <div id="notif-log"></div>
+  </div>
+</div>
+
+<!-- ══ VENDOR RANKING ══ -->
+<div class="section" id="s-ranking">
+  <div class="toolbar">
+    <select class="filter-select" id="rank-sort" onchange="loadRanking()">
+      <option value="outstanding">Sort: Highest Outstanding</option>
+      <option value="paid">Sort: Highest Paid</option>
+      <option value="invoices">Sort: Most Invoices</option>
+    </select>
+    <select class="filter-select" id="rank-type" onchange="loadRanking()">
+      <option value="">All Suppliers</option>
+      <option value="LOCAL">Local Suppliers</option>
+      <option value="ZCDC">ZCDC Suppliers</option>
+    </select>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="btn btn-out btn-sm" onclick="exportCSV('vendor_ranking')">⬇ Export Ranking</button></div>
+  <div class="card">
+    <div class="card-title">🏆 Vendor Ranking — by Value &amp; Outstanding</div>
+    <div class="tbl-wrap"><table id="rank-table">
+      <thead><tr><th>#</th><th>Vendor</th><th>Type</th><th>Category</th><th>Payment Method</th>
+        <th>Total Invoiced</th><th>Total Paid</th><th>Outstanding</th><th>Invoices</th></tr></thead>
+      <tbody id="rank-body"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ══ VENDORS ══ -->
+<div class="section" id="s-vendors">
+  <div class="toolbar">
+    <input class="search-in" id="vendor-search" placeholder="🔍 Search vendors..." oninput="loadVendors()">
+    <select class="filter-select" id="vendor-month" onchange="loadVendors()"><option value="">All Months</option></select>
+    <button class="btn btn-gold btn-sm" onclick="show('add-vendor')">➕ Add Vendor</button>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Vendor</th><th>Type</th><th>Category</th><th>Payment Method</th>
+      <th>Bank Account</th><th>EcoCash</th><th>Terms</th><th>Outstanding</th></tr></thead>
+    <tbody id="vendors-body"></tbody>
+  </table></div>
+</div>
+
+<!-- ══ ADD VENDOR ══ -->
+<div class="section" id="s-add-vendor">
+  <div class="card" style="max-width:600px">
+    <div class="card-title">🏢 Add New Vendor</div>
+    <div class="form-row">
+      <div class="fg"><label>Vendor Name *</label><input type="text" id="v-name" placeholder="Company name"></div>
+      <div class="fg"><label>Category *</label>
+        <select id="v-cat"><option value="Supplies">Supplies</option><option value="Services">Services</option><option value="Other">Other</option></select></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-vendor')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitVendor()">Add Vendor</button>
+    <div class="form-row">
+      <div class="fg"><label>Supplier Type *</label>
+        <select id="v-type"><option value="LOCAL">Local Supplier</option><option value="ZCDC">ZCDC Supplier</option></select></div>
+      <div class="fg"><label>Payment Terms (days)</label><input type="number" id="v-terms" value="30" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Payment Method</label>
+        <select id="v-method"><option value="Bank">Bank Transfer</option><option value="EcoCash">EcoCash</option><option value="Cash">Cash</option></select></div>
+      <div class="fg"><label>Bank Name</label><input type="text" id="v-bank" placeholder="e.g. CABS, ZB, FBC"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Bank Account Number</label><input type="text" id="v-acc" placeholder="Account number"></div>
+      <div class="fg"><label>EcoCash Number</label><input type="text" id="v-eco" placeholder="07XXXXXXXX"></div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.5rem">
+      <button class="btn btn-gold" onclick="addVendor()">➕ Add Vendor</button>
+      <button class="btn btn-out" onclick="show('vendors')">Cancel</button>
     </div>
   </div>
 </div>
 
-<div class="overlay" id="modal-invoice">
+<!-- ══ INVOICES ══ -->
+<div class="section" id="s-invoices">
+  <div class="toolbar">
+    <input class="search-in" id="inv-search" placeholder="🔍 Search..." oninput="loadInvoices()">
+    <select class="filter-select" id="inv-status" onchange="loadInvoices()">
+      <option value="">All Statuses</option>
+      <option value="Draft">Draft</option><option value="Submitted">Submitted</option>
+      <option value="Verified">Verified</option><option value="Approved">Approved</option>
+      <option value="Scheduled">Scheduled</option><option value="Partially Paid">Partially Paid</option>
+      <option value="Paid">Paid</option><option value="Rejected">Rejected</option>
+    </select>
+    <select class="filter-select" id="inv-month" onchange="loadInvoices()"><option value="">All Months</option></select>
+    <button class="btn btn-gold btn-sm" onclick="show('add-invoice')">✏️ Add Invoice</button>
+    <button class="btn btn-out btn-sm" onclick="exportCSV('invoices')">⬇ Export</button>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Invoice #</th><th>Vendor</th><th>Type</th><th>Date</th><th>Description</th>
+      <th>Currency</th><th>Amount</th><th>Outstanding</th><th>Cost Centre</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody id="invoices-body"></tbody>
+  </table></div>
+</div>
+
+<!-- ══ ADD INVOICE ══ -->
+<div class="section" id="s-add-invoice">
+  <div class="card" style="max-width:640px">
+    <div class="card-title">✏️ Add New Invoice</div>
+    <div class="form-row">
+      <div class="fg"><label>Invoice Number *</label><input type="text" id="i-num" placeholder="e.g. INV-2025-001"></div>
+      <div class="fg"><label>Vendor *</label><select id="i-vendor"><option value="">Select vendor...</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Invoice Date *</label><input type="date" id="i-date"></div>
+      <div class="fg"><label>Due Date</label><input type="date" id="i-due"></div>
+    </div>
+    <div class="fg"><label>Description *</label><textarea id="i-desc" rows="2" placeholder="Goods/services description"></textarea></div>
+    <div class="form-row">
+      <div class="fg"><label>Total Amount *</label><input type="number" id="i-amt" placeholder="0.00" min="0.01" step="0.01"></div>
+      <div class="fg"><label>Currency *</label>
+        <select id="i-currency" style="width:100%;background:#111100;border:1px solid var(--border2);border-radius:9px;padding:.65rem .9rem;color:var(--text);font-family:var(--font);font-size:.88rem;outline:none">
+          <option value="USD">USD — US Dollar</option>
+          <option value="ZiG">ZiG — Zimbabwe Gold</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Doc Reference</label><input type="text" id="i-ref" placeholder="PO/GRV reference"></div>
+      <div class="fg"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Cost Centre Number</label><input type="number" id="i-ccn" placeholder="e.g. 1001"></div>
+      <div class="fg"><label>Cost Centre Name</label><input type="text" id="i-ccname" placeholder="e.g. Mining-Ops"></div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.5rem">
+      <button class="btn btn-gold" onclick="addInvoice()">➕ Add Invoice</button>
+      <button class="btn btn-out" onclick="show('invoices')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAX INVOICES ══ -->
+<div class="section" id="s-tax-invoices">
+  <div class="card" style="max-width:640px;margin-bottom:16px">
+    <div class="card-title">🧾 Capture Localized Tax Invoice</div>
+    <div class="form-row">
+      <div class="fg"><label>Vendor *</label><select id="ti-vendor"><option value="">Select vendor...</option></select></div>
+      <div class="fg"><label>Invoice Number *</label><input type="text" id="ti-num" placeholder="TAX-INV-001"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Invoice Date *</label><input type="date" id="ti-date"></div>
+      <div class="fg"><label>Tax Type</label>
+        <select id="ti-type"><option value="VAT">VAT</option><option value="WHT">WHT (Withholding)</option><option value="CGT">CGT</option><option value="Other">Other</option></select></div>
+    </div>
+    <div class="form-row-3">
+      <div class="fg"><label>Currency</label>
+        <select id="ti-currency"><option value="USD">USD</option><option value="ZiG">ZiG</option><option value="ZWL">ZWL</option></select></div>
+      <div class="fg"><label>Gross Amount *</label><input type="number" id="ti-gross" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label>VAT Amount</label><input type="number" id="ti-vat" placeholder="0.00" step="0.01"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Net Amount</label><input type="number" id="ti-net" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label>Exchange Rate (to USD)</label><input type="number" id="ti-rate" value="1" step="0.0001"></div>
+    </div>
+    <div class="fg"><label>Description</label><textarea id="ti-desc" rows="2" placeholder="Tax invoice details"></textarea></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="addTaxInvoice()">🧾 Capture Tax Invoice</button>
+      <button class="btn btn-out" onclick="exportCSV('tax_invoices')">⬇ Export Tax Invoices</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🧾 Captured Tax Invoices</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Invoice #</th><th>Vendor</th><th>Date</th><th>Type</th><th>Currency</th>
+        <th>Gross</th><th>VAT</th><th>Net</th><th>USD Amount</th><th>Captured By</th></tr></thead>
+      <tbody id="tax-body"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ══ BATCHES ══ -->
+<div class="section" id="s-batches">
+  <div class="card" style="max-width:560px;margin-bottom:16px">
+    <div class="card-title">💳 Create Payment Batch</div>
+    <div class="form-row">
+      <div class="fg"><label>Batch Reference *</label><input type="text" id="b-ref" placeholder="BATCH-2025-001"></div>
+      <div class="fg"><label>Scheduled Date *</label><input type="date" id="b-date"></div>
+    </div>
+    <div class="fg"><label>Notes</label><input type="text" id="b-notes" placeholder="Optional notes"></div>
+    <div class="fg"><label>Select Approved Invoices</label>
+      <div id="b-inv-list" style="max-height:180px;overflow-y:auto;background:#111100;border:1px solid var(--border2);border-radius:8px;padding:8px"></div>
+    </div>
+    <button class="btn btn-gold" onclick="createBatch()">💳 Create Batch</button>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Payment Batches</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Ref</th><th>Scheduled Date</th><th>Invoices</th><th>Vendors</th><th>Total</th><th>Created By</th></tr></thead>
+      <tbody id="batches-body"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ══ SCHEDULE ══ -->
+<div class="section" id="s-schedule">
+  <div class="toolbar"><button class="btn btn-out btn-sm" onclick="exportCSV('outstanding')">⬇ Export</button></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Batch Ref</th><th>Scheduled Date</th><th>Vendor</th><th>Invoice #</th>
+      <th>Payment Method</th><th>Bank Account</th><th>Amount</th><th>Actions</th></tr></thead>
+    <tbody id="schedule-body"></tbody>
+  </table></div>
+</div>
+
+<!-- ══ RISK SCORECARD ══ -->
+<div class="section" id="s-risk">
+  <div class="card">
+    <div class="card-title">⚠️ Vendor Risk Scorecard — Formulas &amp; Methodology</div>
+    <div style="font-size:.8rem;color:var(--muted);line-height:1.9;column-count:2;column-gap:24px">
+      <strong style="color:var(--gl)">Risk Score Formula (0–100):</strong><br>
+      • Age of oldest unpaid invoice: up to 40 pts<br>
+      • Payment terms breach: up to 20 pts<br>
+      • Outstanding amount (vs $50k baseline): up to 20 pts<br>
+      • Rejection history: up to 10 pts<br>
+      • Partial payment history: up to 10 pts<br>
+      <br>
+      <strong style="color:var(--gl)">Risk Bands:</strong><br>
+      🟢 Low (0–29) | 🟡 Medium (30–49) | 🔴 High (50–69) | 🚨 Critical (70+)
+    </div>
+  </div>
+  <div id="risk-alerts"></div>
+  <div class="card"><div id="risk-list"></div></div>
+</div>
+
+<!-- ══ CASH PROJECTION ══ -->
+<div class="section" id="s-projection">
+  <div class="chart-card" style="margin-bottom:14px">
+    <div class="chart-title">Cash Requirement — Next 13 Weeks</div>
+    <div class="chart-sub">Scheduled (firm) + Projected (approved/overdue)</div>
+    <canvas id="ch-proj" height="180"></canvas>
+  </div>
+  <div id="proj-weeks" class="proj-week-grid"></div>
+</div>
+
+<!-- ══ WORKING CAPITAL ══ -->
+<div class="section" id="s-working-capital">
+  <div class="kpi-grid" id="wc-kpis"></div>
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Payment Velocity (Monthly)</div>
+      <div class="chart-sub">Invoiced vs Paid by month</div>
+      <canvas id="ch-velocity" height="180"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">AP Metrics</div>
+      <div class="chart-sub">Key working capital ratios</div>
+      <div id="wc-metrics" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AGING ══ -->
+<div class="section" id="s-aging">
+  <div class="toolbar">
+    <select class="filter-select" id="aging-month" onchange="loadAging()"><option value="">All Months</option></select>
+    <button class="btn btn-out btn-sm" onclick="exportCSV('outstanding')">⬇ Export</button>
+  </div>
+  <div class="chart-card" style="margin-bottom:14px">
+    <div class="chart-title">Aging Buckets</div>
+    <canvas id="ch-aging" height="160"></canvas>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Vendor</th><th>0–30 days</th><th>31–60 days</th><th>61–90 days</th><th>91+ days</th><th>Total</th></tr></thead>
+    <tbody id="aging-body"></tbody>
+    <tfoot id="aging-foot"></tfoot>
+  </table></div>
+</div>
+
+<!-- ══ OUTSTANDING REPORT ══ -->
+<div class="section" id="s-reports">
+  <div class="toolbar">
+    <select class="filter-select" id="rep-month" onchange="loadOutstanding()"><option value="">All Months</option></select>
+    <button class="btn btn-out btn-sm" onclick="exportCSV('outstanding')">⬇ Export to Excel</button>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Vendor</th><th>Type</th><th>Category</th><th>Payment Method</th>
+      <th>Account</th><th>Invoices</th><th>Outstanding</th></tr></thead>
+    <tbody id="outstanding-body"></tbody>
+  </table></div>
+</div>
+
+<!-- ══ REJECTIONS ══ -->
+<div class="section" id="s-rejections">
+  <div class="toolbar">
+    <select class="filter-select" id="rej-month" onchange="loadRejections()"><option value="">All Months</option></select>
+  </div>
+  <div id="rej-content"></div>
+</div>
+
+<!-- ══ MONTHLY SUMMARY ══ -->
+<div class="section" id="s-monthly">
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Month</th><th>Total Invoices</th><th>Total Amount</th>
+      <th>Paid Amount</th><th>Outstanding</th><th>Rejected</th></tr></thead>
+    <tbody id="monthly-body"></tbody>
+  </table></div>
+</div>
+
+<!-- ══ NOTIFICATIONS ══ -->
+<div class="section" id="s-notifications">
+  <!-- Email status banner -->
+  <div id="email-status-banner" style="margin-bottom:14px;padding:10px 16px;border-radius:8px;font-size:12px;display:none"></div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">📧 Send Real Email Notification</div>
+
+    <div class="form-row">
+      <div class="fg"><label>Notification Type</label>
+        <select id="n-type">
+          <option value="payment_reminder">💰 Payment Reminder</option>
+          <option value="invoice_approved">✅ Invoice Approved</option>
+          <option value="payment_made">💳 Payment Made</option>
+          <option value="invoice_rejected">❌ Invoice Rejected</option>
+          <option value="batch_scheduled">📅 Batch Scheduled</option>
+          <option value="overdue_alert">⚠️ Overdue Alert</option>
+          <option value="general">📢 General Announcement</option>
+        </select>
+      </div>
+      <div class="fg"><label>Send To (Role or select below)</label>
+        <select id="n-target">
+          <option value="Finance Manager">Finance Manager</option>
+          <option value="Chief Finance Officer">Chief Finance Officer</option>
+          <option value="Assistant Finance Manager">Asst. Finance Manager</option>
+          <option value="Cost and Management Accountant">C&amp;M Accountant</option>
+          <option value="Assistant Cost and Management Accountant">Asst. C&amp;M Accountant</option>
+          <option value="Cost and Management Clerk">C&amp;M Clerk</option>
+          <option value="Receiving Clerk">Receiving Clerk</option>
+          <option value="Treasury Officer">Treasury Officer</option>
+          <option value="all">All Internal Staff</option>
+          <option value="custom">Custom Email Address →</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Custom email row — shown when "Custom Email Address" is selected -->
+    <div class="fg" id="n-custom-wrap" style="display:none">
+      <label>📧 Email Address(es) — separate multiple with commas</label>
+      <input type="text" id="n-extra-emails" placeholder="e.g. vendor@company.com, staff@zcdc.co.zw">
+    </div>
+
+    <div class="fg"><label>Subject</label>
+      <input type="text" id="n-subject" placeholder="e.g. Payment Reminder — Invoice INV-2025-001">
+    </div>
+    <div class="fg"><label>Message *</label>
+      <textarea id="n-msg" rows="4" placeholder="Type your message here. This will be sent as a branded ZCDC HTML email."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="sendNotifPage()">📧 Send Email Now</button>
+      <span id="send-result" style="font-size:12px;display:none"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="card-title" style="margin:0">📋 Email Log</div>
+      <button class="btn btn-out btn-sm" onclick="loadNotifLog()">↻ Refresh</button>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Time</th><th>Type</th><th>Sent To</th><th>Message</th><th>Sent By</th></tr></thead>
+      <tbody id="notif-log-full"></tbody>
+    </table></div>
+  </div>
+</div>
+
+
+      </div><!-- /content -->
+  </main>
+</div><!-- /app -->
+
+<!-- ══ INVOICE ACTION MODAL ══ -->
+<div class="modal-bg" id="modal-inv">
   <div class="modal">
-    <div class="modal-title">New Invoice / Claim</div><div class="modal-sub">Create a new vendor invoice record</div>
-    <div class="field-row">
-      <div class="field"><label>Invoice Number *</label><input id="in-num" placeholder="INV-2024-001"></div>
-      <div class="field"><label>Vendor *</label><select id="in-vendor"></select></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Invoice Date *</label><input id="in-date" type="date"></div>
-      <div class="field"><label>Due Date</label><input id="in-due" type="date"></div>
-    </div>
-    <div class="field"><label>Description *</label><input id="in-desc" placeholder="Goods/services description"></div>
-    <div class="field"><label>Total Amount (USD) *</label><input id="in-amt" type="number" placeholder="0.00" step="0.01"></div>
-    <div class="field-row">
-      <div class="field"><label>Cost Centre Number</label><input id="in-ccn" type="number" placeholder="e.g. 1001"></div>
-      <div class="field"><label>Cost Centre Name</label><input id="in-ccname" placeholder="e.g. Mining-Ops"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Doc Reference</label><input id="in-doc" placeholder="PO / attachment ref"></div>
-      <div class="field"><label>Created By *</label><input id="in-by"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-invoice')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitInvoice()">Save Invoice</button>
-    </div>
+    <button class="modal-close" onclick="closeModal('modal-inv')">✕</button>
+    <div class="modal-title" id="modal-inv-title">Invoice Detail</div>
+    <div id="modal-inv-body"></div>
   </div>
 </div>
 
-<div class="overlay" id="modal-workflow">
+<!-- ══ PAYMENT MODAL ══ -->
+<div class="modal-bg" id="modal-pay">
   <div class="modal">
-    <div class="modal-title" id="wf-title">Action</div><div class="modal-sub" id="wf-sub"></div>
-    <div class="field"><label>Performed By *</label><input id="wf-by"></div>
-    <div class="field"><label id="wf-notes-lbl">Notes</label><input id="wf-notes" placeholder="Optional"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-workflow')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitWorkflow()">Confirm</button>
+    <button class="modal-close" onclick="closeModal('modal-pay')">✕</button>
+    <div class="modal-title">💳 Record Payment</div>
+    <input type="hidden" id="pay-inv-id">
+    <div class="form-row">
+      <div class="fg"><label>Payment Date</label><input type="date" id="pay-date"></div>
+      <div class="fg"><label>Amount (USD)</label><input type="number" id="pay-amt" step="0.01"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Method</label>
+        <select id="pay-method"><option value="Bank">Bank</option><option value="EcoCash">EcoCash</option><option value="Cash">Cash</option></select></div>
+      <div class="fg"><label>Bank Reference</label><input type="text" id="pay-ref" placeholder="Ref/receipt number"></div>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn btn-gold" onclick="submitPayment()">💳 Record Payment</button>
+      <button class="btn btn-out" onclick="closeModal('modal-pay')">Cancel</button>
     </div>
   </div>
 </div>
 
-<div class="overlay" id="modal-payment">
-  <div class="modal">
-    <div class="modal-title">Record Payment</div><div class="modal-sub" id="pay-sub"></div>
-    <div class="field-row">
-      <div class="field"><label>Payment Date *</label><input id="pay-date" type="date"></div>
-      <div class="field"><label>Amount to Pay *</label><input id="pay-amt" type="number" placeholder="0.00" step="0.01"></div>
-    </div>
-    <div class="field"><label>Payment Method *</label>
-      <select id="pay-method"><option value="Bank">Bank Transfer</option><option value="EcoCash">EcoCash</option><option value="Cash">Cash</option><option value="Cheque">Cheque</option></select>
-    </div>
-    <div class="field"><label>Reference / Transaction ID</label><input id="pay-ref" placeholder="TXN-12345"></div>
-    <div class="field"><label>Recorded By *</label><input id="pay-by"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-payment')">Cancel</button>
-      <button class="btn btn-success" onclick="submitPayment()">Record Payment</button>
-    </div>
-  </div>
-</div>
-
-<div class="overlay" id="modal-add-batch">
-  <div class="modal">
-    <div class="modal-title">Schedule in Batch</div><div class="modal-sub" id="ab-sub"></div>
-    <div class="field"><label>Select Batch *</label><select id="ab-bid"></select></div>
-    <div class="field"><label>Scheduled Amount *</label><input id="ab-amt" type="number" step="0.01"></div>
-    <div class="field"><label>Added By *</label><input id="ab-by"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-add-batch')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitAddBatch()">Schedule</button>
-    </div>
-  </div>
-</div>
-
-<div class="overlay" id="modal-batch">
-  <div class="modal">
-    <div class="modal-title">Create Payment Batch</div><div class="modal-sub">Can include many vendors &amp; invoices</div>
-    <div class="field"><label>Batch Reference *</label><input id="b-ref" placeholder="BATCH-APR-W1"></div>
-    <div class="field"><label>Scheduled Date *</label><input id="b-date" type="date"></div>
-    <div class="field"><label>Notes</label><input id="b-notes" placeholder="e.g. Weekly payrun April"></div>
-    <div class="field"><label>Created By *</label><input id="b-by"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-batch')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitBatch()">Create</button>
-    </div>
-  </div>
-</div>
-
-<div class="overlay" id="modal-batch-items">
-  <div class="modal modal-lg">
-    <div class="modal-title" id="bi-title">Batch Items</div><div class="modal-sub" id="bi-sub"></div>
-    <div class="table-scroll"><table><thead><tr>
-      <th>Vendor</th><th>Invoice #</th><th>Method</th><th>Account</th><th>Scheduled</th><th>Status</th>
-    </tr></thead><tbody id="bi-tbl"></tbody></table></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-batch-items')">Close</button></div>
-  </div>
-</div>
-
-<div class="overlay" id="modal-vendor-detail">
-  <div class="modal modal-lg"><div id="vd-content"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-vendor-detail')">Close</button></div>
-  </div>
-</div>
-
-<div class="overlay" id="modal-audit">
-  <div class="modal">
-    <div class="modal-title" id="aud-title">Audit Trail</div><div class="modal-sub" id="aud-sub"></div>
-    <div id="aud-tl" style="padding:8px 0"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-audit')">Close</button></div>
-  </div>
-</div>
-
-<div class="toast-wrap" id="toasts"></div>
+<div class="toast" id="toast"></div>
 
 <script>
-// ── State ────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// STATE & HELPERS
+// ═══════════════════════════════════════════════════════════════════
 let currentUser = null;
-let _wfInvoiceId = null, _wfAction = null;
-let _payInvoiceId = null, _payMax = 0;
-let _abInvoiceId = null;
-let _charts = {};
+let charts = {};
 
-const PAGE_META = {
-  dashboard:{title:'Dashboard',sub:'Financial operations overview'},
-  risk:{title:'Vendor Risk Scorecard',sub:'Risk scoring · aging breach · outstanding exposure'},
-  cashflow:{title:'Cash Flow Projection',sub:'13-week forward cash requirement forecast'},
-  wc:{title:'Working Capital Analytics',sub:'DPO · AP turnover · payment velocity · cost centre breakdown'},
-  performance:{title:'Payment Performance',sub:'On-time vs late payments · approval cycle time'},
-  vendors:{title:'Vendors',sub:'Vendor master — search by name, account or EcoCash'},
-  invoices:{title:'Invoices',sub:'Invoice register — filter by month, status or keyword'},
-  batches:{title:'Payment Batches',sub:'Multi-vendor scheduled payment runs'},
-  outstanding:{title:'Outstanding Summary',sub:'Total payables by vendor'},
-  aging:{title:'AP Aging Analysis',sub:'Accounts payable by age bucket (from invoice date)'},
-  backlog:{title:'Approval Backlog',sub:'Invoices awaiting verification or approval'},
-  rejections:{title:'Rejections',sub:'Rejected invoices grouped by month'},
-  schedule:{title:'Payment Schedule',sub:'Upcoming scheduled payments'},
-  monthly:{title:'Monthly Summary',sub:'Invoice totals and activity by month'},
-};
+async function api(url, opts={}) {
+  const res = await fetch(url, {headers:{'Content-Type':'application/json'}, ...opts});
+  return res.json();
+}
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const fmtM = v => '$'+Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtMonth = ym => { try{return new Date(ym+'-01').toLocaleDateString('en-US',{month:'long',year:'numeric'})}catch{return ym} };
-const today = () => new Date().toISOString().split('T')[0];
+function toast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+type+' show';
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 4200);
+}
 
-function statusBadge(s){
-  const m={Draft:'badge-draft',Submitted:'badge-submitted',Verified:'badge-verified',Approved:'badge-approved',Rejected:'badge-rejected',Scheduled:'badge-scheduled','Partially Paid':'badge-partial',Paid:'badge-paid'};
+function $ (id) { return document.getElementById(id); }
+function fmt(n) { return '$'+Number(n||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function closeModal(id) { $(id).classList.remove('open'); }
+
+function statusBadge(s) {
+  const m = {'Draft':'b-draft','Submitted':'b-submitted','Verified':'b-verified',
+    'Approved':'b-approved','Scheduled':'b-scheduled','Partially Paid':'b-partial',
+    'Paid':'b-paid','Rejected':'b-rejected'};
   return `<span class="badge ${m[s]||''}">${s}</span>`;
 }
-function ageBadge(b){
-  const m={'0-30 days':'badge-0-30','31-60 days':'badge-31-60','61-90 days':'badge-61-90','91+ days':'badge-91'};
-  return `<span class="badge ${m[b]||''}">${b}</span>`;
-}
-function payBadge(p){
-  if(p==='EcoCash') return `<span class="badge badge-eco">EcoCash</span>`;
-  if(p==='Cash')    return `<span class="badge badge-cash">Cash</span>`;
-  return `<span class="badge badge-bank">${p||'Bank'}</span>`;
-}
-function riskBadge(label){
-  const m={Low:'badge-risk-low',Medium:'badge-risk-medium',High:'badge-risk-high',Critical:'badge-risk-critical'};
-  return `<span class="badge ${m[label]||''}">${label}</span>`;
+
+function typeBadge(t) {
+  return `<span class="badge ${t==='ZCDC'?'b-zcdc':'b-local'}">${t||'LOCAL'}</span>`;
 }
 
-function toast(msg,type='success'){
-  const t=document.createElement('div');
-  t.className=`toast ${type}`;
-  t.textContent=(type==='success'?'✓ ':'✗ ')+msg;
-  $('toasts').appendChild(t);
-  setTimeout(()=>t.remove(),3200);
-}
-
-function openModal(id){$(id).classList.add('open')}
-function closeModal(id){$(id).classList.remove('open')}
-document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
-
-function destroyChart(id){if(_charts[id]){_charts[id].destroy();delete _charts[id]}}
-
-// ── API ───────────────────────────────────────────────────────────────────────
-async function api(path,method='GET',body=null){
-  const opts={method,headers:{'Content-Type':'application/json'}};
-  if(body) opts.body=JSON.stringify(body);
-  const r=await fetch(path,opts); return r.json();
-}
-
-// ── Auth ─────────────────────────────────────────────────────────────────────
-async function doLogin(){
-  const user=$('login-user').value.trim(), pass=$('login-pass').value.trim();
-  const r=await api('/api/login','POST',{username:user,password:pass});
-  if(r.ok){
-    currentUser=r;
-    $('u-init').textContent=r.initials; $('u-name').textContent=r.username; $('u-role').textContent=r.role;
-    ['in-by','wf-by','pay-by','ab-by','b-by'].forEach(id=>{const el=$(id);if(el)el.value=r.username});
-    $('login-page').style.display='none'; $('app').style.display='flex';
-    populateMonthFilters(); nav('dashboard');
-  } else { $('login-err').textContent=r.error; $('login-err').style.display='block'; }
-}
-$('login-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
-async function doLogout(){ await api('/api/logout','POST'); location.reload(); }
-
-// ── Navigation ───────────────────────────────────────────────────────────────
-function nav(name, el){
+function show(sec) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  $('sec-'+name).classList.add('active');
-  (el || document.querySelector(`.nav-item[onclick*="'${name}'"]`))?.classList.add('active');
-  const m=PAGE_META[name]||{};
-  $('page-title').textContent=m.title||name; $('page-sub').textContent=m.sub||'';
-  ({
-    dashboard:()=>{loadDashboard();loadRecentInvoices()},
-    risk:loadRisk, cashflow:loadCashflow, wc:loadWorkingCapital, performance:loadPerformance,
-    vendors:loadVendors, invoices:loadInvoices, batches:loadBatches,
-    outstanding:loadOutstanding, aging:loadAging, backlog:loadBacklog,
-    rejections:loadRejections, schedule:loadSchedule, monthly:loadMonthlySummary,
-  }[name]||function(){})();
-}
-
-// ── Month filters ─────────────────────────────────────────────────────────────
-async function populateMonthFilters(){
-  const [im,vm]=await Promise.all([api('/api/invoices/months'),api('/api/vendors/months')]);
-  ['i-month','out-month','age-month','bl-month','rej-month'].forEach(id=>{
-    const el=$(id); if(!el) return;
-    el.innerHTML='<option value="">All Months</option>'+im.map(m=>`<option value="${m}">${fmtMonth(m)}</option>`).join('');
+  const el = $('s-'+sec);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')?.includes("'"+sec+"'")) n.classList.add('active');
   });
-  const vs=$('v-month'); if(vs) vs.innerHTML='<option value="">All Months</option>'+vm.map(m=>`<option value="${m}">${fmtMonth(m)}</option>`).join('');
+  const titles = {
+    'dashboard':'Dashboard','kpis':'KPIs & SOPs','ranking':'Vendor Ranking',
+    'vendors':'All Vendors','add-vendor':'Add Vendor',
+    'invoices':'All Invoices','add-invoice':'Add Invoice','tax-invoices':'Tax Invoices',
+    'batches':'Payment Batches','schedule':'Payment Schedule',
+    'risk':'Risk Scorecard','projection':'Cash Projection','working-capital':'Working Capital',
+    'aging':'Aging Report','reports':'Outstanding Report','rejections':'Rejections Report',
+    'monthly':'Monthly Summary','notifications':'Notifications',
+    'sops':'SOPs — IMS-FIN-SOP-01 & IMS-FIN-SOP-02'
+  };
+  $('pg-title').textContent = titles[sec] || sec;
+  const loaders = {
+    'dashboard':loadDashboard, 'kpis':loadKPIs, 'ranking':loadRanking,
+    'vendors':loadVendors, 'add-vendor':populateVendorSelects,
+    'invoices':loadInvoices, 'add-invoice':populateVendorSelects,
+    'tax-invoices':loadTaxInvoices,
+    'batches':loadBatches, 'schedule':loadSchedule,
+    'risk':loadRisk, 'projection':loadProjection, 'working-capital':loadWorkingCapital,
+    'aging':loadAging, 'reports':loadOutstanding, 'rejections':loadRejections,
+    'monthly':loadMonthly, 'notifications':loadNotifLog,
+    'sops':loadSops
+  };
+  if(loaders[sec]) loaders[sec]();
 }
 
-// ── Dashboard ────────────────────────────────────────────────────────────────
-async function loadDashboard(){
-  const [d,risk,aging]=await Promise.all([
-    api('/api/reports/dashboard'),
-    api('/api/analytics/vendor_risk'),
-    api('/api/reports/aging'),
-  ]);
+function exportCSV(type) {
+  window.open('/api/export/'+type, '_blank');
+}
 
-  $('dash-kpis').innerHTML=`
-    <div class="kpi accent"><div class="kpi-label">Total Outstanding</div><div class="kpi-value">${fmtM(d.total_outstanding)}</div></div>
-    <div class="kpi warn"><div class="kpi-label">Pending Approval</div><div class="kpi-value">${d.pending_approval}</div></div>
-    <div class="kpi"><div class="kpi-label">Approved (Unsched.)</div><div class="kpi-value">${d.approved_unscheduled}</div></div>
-    <div class="kpi"><div class="kpi-label">Scheduled</div><div class="kpi-value">${fmtM(d.scheduled_total)}</div></div>
-    <div class="kpi danger"><div class="kpi-label">Overdue 91+ days</div><div class="kpi-value">${d.overdue_91plus}</div></div>
-    <div class="kpi success"><div class="kpi-label">Paid This Month</div><div class="kpi-value">${fmtM(d.paid_this_month)}</div></div>
-    <div class="kpi"><div class="kpi-label">Total Vendors</div><div class="kpi-value">${d.total_vendors}</div></div>
-    <div class="kpi danger"><div class="kpi-label">Rejected This Month</div><div class="kpi-value">${d.rejected_this_month}</div></div>
-  `;
+// ═══════════════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════════════
+function authTab(t) {
+  document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',t==='login'?i===0:i===1));
+  document.querySelectorAll('.auth-form').forEach((f,i)=>f.classList.toggle('active',t==='login'?i===0:i===1));
+}
 
-  // Risk alerts
-  const critical=risk.filter(r=>r.risk_label==='Critical');
-  const high=risk.filter(r=>r.risk_label==='High');
-  let alerts='';
-  if(critical.length) alerts+=`<div class="alert-banner alert-critical"><span class="alert-icon">🔴</span><div><strong>CRITICAL RISK:</strong> ${critical.map(r=>r.vendor).join(', ')} — outstanding payables breaching payment terms by over 60 days. Immediate management attention required.</div></div>`;
-  if(high.length) alerts+=`<div class="alert-banner alert-high"><span class="alert-icon">🟠</span><div><strong>HIGH RISK:</strong> ${high.map(r=>r.vendor).join(', ')} — aging breach detected. Schedule payment or escalate approval.</div></div>`;
-  $('dash-alerts').innerHTML=alerts;
+async function doLogin() {
+  const user = $('l-user').value.trim().toUpperCase(), pass = $('l-pass').value.trim();
+  if(!user||!pass){showErr('l-err','Enter mine number and PIN');return;}
+  if(!/^\d{4}$/.test(pass)&&pass.length<3){showErr('l-err','PIN must be 4 digits');return;}
+  // Send both mine_number/pin (new) and username/password (legacy fallback)
+  const d = await api('/api/login', {method:'POST', body:JSON.stringify({mine_number:user,pin:pass,username:user,password:pass})});
+  if(d.ok) { currentUser=d; enterApp(d); }
+  else showErr('l-err', d.error||'Invalid mine number or PIN');
+}
 
-  // Aging bar chart
-  const t=aging.totals||{};
-  const buckets=['0-30 days','31-60 days','61-90 days','91+ days'];
-  destroyChart('aging-bar');
-  _charts['aging-bar']=new Chart($('chart-aging-bar'),{
-    type:'bar',
-    data:{labels:['0–30','31–60','61–90','91+'],
-      datasets:[{label:'Outstanding ($)',data:buckets.map(b=>t[b]||0),
-        backgroundColor:['rgba(34,197,94,.7)','rgba(245,158,11,.7)','rgba(251,146,60,.7)','rgba(239,68,68,.7)'],
-        borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{y:{ticks:{callback:v=>v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v,color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
-              x:{ticks:{color:'#6b7a99'},grid:{display:false}}}}
+async function doRegister() {
+  const fullname = ($('r-fullname')?.value||'').trim();
+  const user  = $('r-user').value.trim().toUpperCase(),
+        pass  = $('r-pass').value.trim(),
+        pass2 = $('r-pass2').value.trim(),
+        role  = $('r-role').value,
+        email = ($('r-email')?.value||'').trim();
+  if(!user||!pass||!role){showErr('r-err','Mine number, PIN and role are required');return;}
+  if(!/^\d{4}$/.test(pass)){showErr('r-err','PIN must be exactly 4 digits (e.g. 1234)');return;}
+  if(pass!==pass2){showErr('r-err','PINs do not match');return;}
+  const d = await api('/api/register', {method:'POST', body:JSON.stringify({mine_number:user,pin:pass,full_name:fullname,role,email,username:user,password:pass})});
+  if(d.ok){
+    toast('Account created! Sign in with your mine number and PIN.','success');
+    authTab('login');
+    $('l-user').value = user;
+  } else showErr('r-err', d.error||'Registration failed');
+}
+
+function showErr(id, msg) {
+  const el=$(id); el.textContent=msg; el.style.display='block';
+  setTimeout(()=>el.style.display='none', 4000);
+}
+
+let currentPerms = {};
+
+async function enterApp(u) {
+  $('auth-screen').style.display = 'none';
+  $('app').classList.add('show');
+  $('topbar-av').textContent = u.initials||'?';
+  $('topbar-name').textContent = u.username;
+  $('topbar-role').textContent = u.role;
+  $('sb-user').textContent = u.role+' · '+u.username;
+
+  // Fetch permissions for this role
+  const pr = await api('/api/my_permissions');
+  currentPerms = pr.permissions || {};
+
+  // Show role banner
+  const banner = $('role-banner');
+  if(banner) {
+    banner.innerHTML = `<span style="font-size:13px">🔒</span> <strong>${u.role}</strong> — ${currentPerms.label||''}`;
+    banner.style.display = 'flex';
+  }
+
+  // Apply nav visibility — only show sections this role can access
+  applyRoleNav(currentPerms.nav_items || ['dashboard']);
+  // Apply button visibility
+  applyRoleButtons(currentPerms);
+
+  populateMonthFilters();
+  loadDashboard();
+}
+
+function applyRoleNav(allowed) {
+  // Map nav show() targets to permission keys
+  const navMap = {
+    'dashboard': true,
+    'kpis': true,
+    'ranking': true,
+    'notifications': true,
+    'vendors': ['vendors','outstanding','aging','backlog','rejections','schedule','monthly','risk','cashflow','wc','performance','kpidash','sops'],
+    'add-vendor': ['vendors'],
+    'invoices': ['invoices'],
+    'add-invoice': ['invoices'],
+    'tax-invoices': ['invoices'],
+    'batches': ['batches'],
+    'schedule': ['batches','schedule'],
+    'risk': ['risk'],
+    'projection': ['cashflow'],
+    'working-capital': ['wc','performance'],
+    'aging': ['aging','outstanding'],
+    'reports': ['outstanding'],
+    'rejections': ['rejections'],
+    'monthly': ['monthly'],
+  };
+  const allowedSet = new Set(allowed);
+  document.querySelectorAll('.nav-item').forEach(n => {
+    const oc = n.getAttribute('onclick') || '';
+    const m = oc.match(/show\('([^']+)'\)/);
+    if(!m) return;
+    const target = m[1];
+    const req = navMap[target];
+    if(req === true) { n.style.display = ''; return; }
+    if(!req) { n.style.display = 'none'; return; }
+    // req is array of allowed nav_item keys — show if any match
+    const show = req.some(r => allowedSet.has(r));
+    n.style.display = show ? '' : 'none';
   });
-
-  // Status pie
-  const statuses=['Draft','Submitted','Verified','Approved','Scheduled','Partially Paid','Paid','Rejected'];
-  const invData=await api('/api/invoices');
-  const counts={};
-  statuses.forEach(s=>counts[s]=0);
-  invData.forEach(i=>{ if(counts[i.status]!==undefined) counts[i.status]++; });
-  const activeStats=statuses.filter(s=>counts[s]>0);
-  const colors=['#6b7a99','#f59e0b','#4f8ef7','#22d3a5','#a78bfa','#fb923c','#22c55e','#ef4444'];
-  destroyChart('status-pie');
-  _charts['status-pie']=new Chart($('chart-status-pie'),{
-    type:'doughnut',
-    data:{labels:activeStats,datasets:[{data:activeStats.map(s=>counts[s]),
-      backgroundColor:activeStats.map(s=>colors[statuses.indexOf(s)]),borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-      plugins:{legend:{position:'right',labels:{color:'#6b7a99',font:{size:10},boxWidth:10}}}}
+  // Also hide nav-sec headers if all their children are hidden
+  document.querySelectorAll('.nav-sec').forEach(sec => {
+    let sib = sec.nextElementSibling;
+    let hasVisible = false;
+    while(sib && !sib.classList.contains('nav-sec')) {
+      if(sib.style.display !== 'none') hasVisible = true;
+      sib = sib.nextElementSibling;
+    }
+    sec.style.display = hasVisible ? '' : 'none';
   });
 }
 
-async function loadRecentInvoices(){
-  const rows=await api('/api/invoices');
-  $('dash-invoices').innerHTML=rows.slice(0,8).map(r=>`<tr>
-    <td class="amount">${r.invoice_number}</td><td>${r.vendor_name}</td>
-    <td>${r.invoice_date}</td><td class="amount">${fmtM(r.total_amount)}</td>
-    <td class="amount">${fmtM(r.outstanding_amount)}</td>
-    <td>${statusBadge(r.status)}</td><td>${ageBadge(r.age_bucket)}</td>
-  </tr>`).join('');
-}
-
-// ── Vendor Risk ───────────────────────────────────────────────────────────────
-async function loadRisk(){
-  const data=await api('/api/analytics/vendor_risk');
-  const counts={Low:0,Medium:0,High:0,Critical:0};
-  data.forEach(r=>{ if(counts[r.risk_label]!==undefined) counts[r.risk_label]++; });
-
-  $('risk-kpis').innerHTML=`
-    <div class="kpi danger"><div class="kpi-label">Critical Risk</div><div class="kpi-value">${counts.Critical}</div><div class="kpi-sub">Immediate action needed</div></div>
-    <div class="kpi warn"><div class="kpi-label">High Risk</div><div class="kpi-value">${counts.High}</div><div class="kpi-sub">Escalate payment</div></div>
-    <div class="kpi"><div class="kpi-label">Medium Risk</div><div class="kpi-value">${counts.Medium}</div><div class="kpi-sub">Monitor closely</div></div>
-    <div class="kpi success"><div class="kpi-label">Low Risk</div><div class="kpi-value">${counts.Low}</div><div class="kpi-sub">Within control</div></div>
-  `;
-
-  let alerts='';
-  data.filter(r=>r.risk_label==='Critical'||r.risk_label==='High').forEach(r=>{
-    const cls=r.risk_label==='Critical'?'alert-critical':'alert-high';
-    const icon=r.risk_label==='Critical'?'🔴':'🟠';
-    alerts+=`<div class="alert-banner ${cls}"><span class="alert-icon">${icon}</span><div>
-      <strong>${r.vendor}</strong> — Risk Score: ${r.risk_score}/100 · ${r.risk_label} Risk<br>
-      Oldest invoice: ${r.oldest_invoice_age_days} days · Outstanding: ${fmtM(r.outstanding)} · Breach: ${Math.max(0,r.oldest_invoice_age_days-r.payment_terms)} days over terms
-    </div></div>`;
+function applyRoleButtons(perms) {
+  // Quick action buttons on dashboard — hide if not permitted
+  const btnMap = {
+    'qa-add-invoice': 'can_create_invoice',
+    'qa-add-vendor':  'can_add_vendor',
+    'qa-tax-invoice': 'can_create_invoice',
+    'qa-batch':       'can_create_batch',
+  };
+  Object.entries(btnMap).forEach(([id, perm]) => {
+    const el = $(id);
+    if(el) el.style.display = perms[perm] ? '' : 'none';
   });
-  $('risk-alerts').innerHTML=alerts;
-
-  // Bar chart
-  destroyChart('risk-bar');
-  _charts['risk-bar']=new Chart($('chart-risk-bar'),{
-    type:'bar',
-    data:{labels:data.map(r=>r.vendor.length>18?r.vendor.substring(0,16)+'…':r.vendor),
-      datasets:[{label:'Risk Score',data:data.map(r=>r.risk_score),
-        backgroundColor:data.map(r=>r.risk_color==='critical'?'rgba(220,38,38,.8)':r.risk_color==='high'?'rgba(239,68,68,.7)':r.risk_color==='medium'?'rgba(245,158,11,.7)':'rgba(34,197,94,.7)'),
-        borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
-      plugins:{legend:{display:false}},
-      scales:{x:{max:100,ticks:{color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
-              y:{ticks:{color:'#6b7a99'},grid:{display:false}}}}
-  });
-
-  // Pie
-  destroyChart('risk-pie');
-  _charts['risk-pie']=new Chart($('chart-risk-pie'),{
-    type:'doughnut',
-    data:{labels:['Low','Medium','High','Critical'],
-      datasets:[{data:[counts.Low,counts.Medium,counts.High,counts.Critical],
-        backgroundColor:['rgba(34,197,94,.8)','rgba(245,158,11,.8)','rgba(239,68,68,.8)','rgba(220,38,38,.9)'],
-        borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
-      plugins:{legend:{position:'bottom',labels:{color:'#6b7a99',font:{size:11},boxWidth:12}}}}
-  });
-
-  // Risk rows
-  $('risk-rows').innerHTML=data.map(r=>`
-    <div class="risk-vendor-row">
-      <div class="risk-score-circle risk-${r.risk_color}">${r.risk_score}</div>
-      <div class="risk-bar-wrap">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="risk-vendor-name">${r.vendor} ${riskBadge(r.risk_label)}</div>
-            <div class="risk-vendor-meta">${r.open_invoices} open invoice(s) · Outstanding: ${fmtM(r.outstanding)} · Oldest: ${r.oldest_invoice_age_days} days · Terms: ${r.payment_terms} days · Breach: ${Math.max(0,r.oldest_invoice_age_days-r.payment_terms)} days</div>
-          </div>
-        </div>
-        <div class="risk-bar-bg"><div class="risk-bar-fill" style="width:${r.risk_score}%;background:${r.risk_color==='critical'?'#dc2626':r.risk_color==='high'?'#ef4444':r.risk_color==='medium'?'#f59e0b':'#22c55e'}"></div></div>
-      </div>
-    </div>`).join('');
 }
 
-// ── Cash Projection ───────────────────────────────────────────────────────────
-async function loadCashflow(){
-  const d=await api('/api/analytics/cash_projection');
-  const weeks=d.weeks||[];
-  const totalSched=weeks.reduce((s,w)=>s+w.scheduled,0);
-  const totalProj=weeks.reduce((s,w)=>s+w.projected,0);
-
-  $('proj-summary').innerHTML=`
-    <div class="proj-summary-card"><div class="proj-summary-label">Total 90-Day Requirement</div><div class="proj-summary-value" style="color:var(--accent)">${fmtM(d.total_90_days)}</div></div>
-    <div class="proj-summary-card"><div class="proj-summary-label">Firm Scheduled (Batches)</div><div class="proj-summary-value" style="color:var(--accent2)">${fmtM(totalSched)}</div></div>
-    <div class="proj-summary-card"><div class="proj-summary-label">Projected (Approved Payables)</div><div class="proj-summary-value" style="color:var(--warn)">${fmtM(totalProj)}</div></div>
-  `;
-
-  destroyChart('cashflow');
-  _charts['cashflow']=new Chart($('chart-cashflow'),{
-    type:'bar',
-    data:{labels:weeks.map(w=>w.label),
-      datasets:[
-        {label:'Firm Scheduled',data:weeks.map(w=>w.scheduled),backgroundColor:'rgba(34,211,165,.7)',borderRadius:3,stack:'s'},
-        {label:'Projected Payables',data:weeks.map(w=>w.projected),backgroundColor:'rgba(245,158,11,.6)',borderRadius:3,stack:'s'},
-      ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#6b7a99',font:{size:11}}}},
-      scales:{y:{stacked:true,ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k',color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
-              x:{stacked:true,ticks:{color:'#6b7a99'},grid:{display:false}}}}
-  });
-
-  destroyChart('cumulative');
-  _charts['cumulative']=new Chart($('chart-cumulative'),{
-    type:'line',
-    data:{labels:weeks.map(w=>w.label),
-      datasets:[{label:'Cumulative Cash Required',data:weeks.map(w=>w.cumulative),
-        borderColor:'#4f8ef7',backgroundColor:'rgba(79,142,247,.08)',fill:true,tension:0.3,pointRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#6b7a99',font:{size:11}}}},
-      scales:{y:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k',color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
-              x:{ticks:{color:'#6b7a99'},grid:{display:false}}}}
-  });
-
-  $('proj-weeks').innerHTML=weeks.slice(0,13).map(w=>`
-    <div class="proj-week">
-      <div class="proj-week-label">Wk ${w.week} · ${w.label}</div>
-      <div class="proj-week-total">${fmtM(w.total)}</div>
-      <div class="proj-week-sched">Sched: ${fmtM(w.scheduled)}</div>
-      <div class="proj-week-proj">Proj: ${fmtM(w.projected)}</div>
-    </div>`).join('');
+function canDo(perm) {
+  if(!currentPerms[perm]) {
+    toast('Access denied: your role (' + (currentUser?.role||'') + ') is not authorised to perform this action per ZCDC SOPs.','error');
+    return false;
+  }
+  return true;
 }
 
-// ── Working Capital ───────────────────────────────────────────────────────────
-async function loadWorkingCapital(){
-  const [wc,cc]=await Promise.all([api('/api/analytics/working_capital'),api('/api/analytics/cost_centre_breakdown')]);
-
-  $('wc-metrics').innerHTML=`
-    <div class="wc-metric"><div class="wc-value">${wc.dpo}</div><div class="wc-label">DPO (Days)</div><div class="wc-hint">Days Payable Outstanding</div></div>
-    <div class="wc-metric"><div class="wc-value">${wc.ap_turnover}x</div><div class="wc-label">AP Turnover</div><div class="wc-hint">Purchases ÷ AP balance</div></div>
-    <div class="wc-metric"><div class="wc-value">${wc.avg_approval_cycle_days}</div><div class="wc-label">Avg Approval Days</div><div class="wc-hint">Draft → Approved cycle</div></div>
-    <div class="wc-metric"><div class="wc-value">${fmtM(wc.total_ap)}</div><div class="wc-label">Total AP Balance</div><div class="wc-hint">Accounts payable</div></div>
-    <div class="wc-metric"><div class="wc-value">${fmtM(wc.total_paid)}</div><div class="wc-label">Total Paid</div><div class="wc-hint">All-time payments recorded</div></div>
-    <div class="wc-metric"><div class="wc-value">${fmtM(wc.total_purchases)}</div><div class="wc-label">Total Purchases</div><div class="wc-hint">All invoices excl. rejected</div></div>
-  `;
-
-  const trend=wc.payment_velocity_trend||[];
-  destroyChart('velocity');
-  _charts['velocity']=new Chart($('chart-velocity'),{
-    type:'bar',
-    data:{labels:trend.map(t=>fmtMonth(t.month).replace(' ','\n')),
-      datasets:[
-        {label:'Invoiced',data:trend.map(t=>t.invoiced),backgroundColor:'rgba(79,142,247,.5)',borderRadius:3},
-        {label:'Paid',data:trend.map(t=>t.paid),backgroundColor:'rgba(34,211,165,.7)',borderRadius:3},
-      ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#6b7a99',font:{size:10}}}},
-      scales:{y:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k',color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
-              x:{ticks:{color:'#6b7a99',font:{size:10}},grid:{display:false}}}}
-  });
-
-  // Cost centre chart
-  destroyChart('cc');
-  _charts['cc']=new Chart($('chart-cc'),{
-    type:'doughnut',
-    data:{labels:cc.map(r=>`CC-${r.cost_centre_number} ${r.cost_centre_name||''}`),
-      datasets:[{data:cc.map(r=>r.outstanding),
-        backgroundColor:['rgba(79,142,247,.8)','rgba(34,211,165,.8)','rgba(245,158,11,.8)','rgba(167,139,250,.8)','rgba(251,146,60,.8)'],
-        borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
-      plugins:{legend:{position:'bottom',labels:{color:'#6b7a99',font:{size:10},boxWidth:10}}}}
-  });
-
-  $('cc-table').innerHTML=cc.length?cc.map(r=>`<tr>
-    <td class="amount">${r.cost_centre_number}</td>
-    <td>${r.cost_centre_name||'—'}</td>
-    <td>${r.invoice_count}</td>
-    <td class="amount">${fmtM(r.total_invoiced)}</td>
-    <td class="amount"><strong>${fmtM(r.outstanding)}</strong></td>
-  </tr>`).join(''):`<tr><td colspan="5" class="empty">No data</td></tr>`;
+async function doLogout() {
+  await api('/api/logout', {method:'POST'});
+  currentUser = null;
+  $('app').classList.remove('show');
+  $('auth-screen').style.display = 'flex';
+  $('app').style.display = 'none';
+  setTimeout(()=>$('app').style.display='', 0);
 }
 
-// ── Payment Performance ───────────────────────────────────────────────────────
-async function loadPerformance(){
-  const d=await api('/api/analytics/payment_performance');
-
-  $('perf-kpis').innerHTML=`
-    <div class="kpi success"><div class="kpi-label">On-Time Payments</div><div class="kpi-value">${d.on_time}</div><div class="kpi-sub">${d.on_time_pct}% of all payments</div></div>
-    <div class="kpi danger"><div class="kpi-label">Late Payments</div><div class="kpi-value">${d.late}</div><div class="kpi-sub">${100-d.on_time_pct}% of all payments</div></div>
-    <div class="kpi warn"><div class="kpi-label">Avg Delay Days</div><div class="kpi-value">${d.avg_delay_days}</div><div class="kpi-sub">For late payments only</div></div>
-    <div class="kpi"><div class="kpi-label">Total Payments</div><div class="kpi-value">${d.total}</div></div>
-  `;
-
-  destroyChart('perf-pie');
-  _charts['perf-pie']=new Chart($('chart-perf-pie'),{
-    type:'doughnut',
-    data:{labels:['On Time','Late'],datasets:[{data:[d.on_time,d.late],backgroundColor:['rgba(34,197,94,.8)','rgba(239,68,68,.8)'],borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-      plugins:{legend:{position:'bottom',labels:{color:'#6b7a99',font:{size:12},boxWidth:14}}}}
-  });
-
-  $('perf-worst').innerHTML=(d.worst_vendors||[]).length?(d.worst_vendors||[]).map(v=>`<tr><td>${v.vendor}</td><td style="color:var(--danger);font-family:var(--mono)">${v.late_count}</td></tr>`).join(''):`<tr><td colspan="2" class="empty">No late payments recorded</td></tr>`;
-}
-
-// ── Vendors ───────────────────────────────────────────────────────────────────
-async function loadVendors(){
-  const s=$('v-search').value, m=$('v-month').value;
-  const rows=await api(`/api/vendors?search=${encodeURIComponent(s)}&month=${m}`);
-  $('vendors-tbl').innerHTML=rows.length?rows.map(r=>`<tr>
-    <td><strong>${r.name}</strong></td><td>${r.category}</td>
-    <td>${payBadge(r.payment_method)}</td>
-    <td class="amount">${r.bank_account||'—'}</td>
-    <td class="amount">${r.ecocash_number||'—'}</td>
-    <td>${r.payment_terms} days</td>
-    <td style="font-size:11px;color:var(--muted)">${fmtMonth(r.created_month)}</td>
-    <td><button class="btn btn-ghost btn-sm" onclick="openVendorDetail('${r.vendor_id}')">View</button></td>
-  </tr>`).join(''):`<tr><td colspan="8" class="empty">No vendors found</td></tr>`;
-}
-
-function togglePayFields(){
-  const m=$('vn-method').value;
-  $('bank-fields').style.display=(m==='Bank'||m==='Cheque')?'':'none';
-  $('eco-fields').style.display=(m==='EcoCash')?'':'none';
-}
-
-async function submitVendor(){
-  const name=$('vn-name').value.trim();
-  if(!name){toast('Vendor name required','error');return;}
-  const r=await api('/api/vendors','POST',{name,category:$('vn-cat').value,payment_terms:parseInt($('vn-terms').value)||30,payment_method:$('vn-method').value,bank_name:$('vn-bank')?.value,bank_account:$('vn-acc')?.value,ecocash_number:$('vn-eco')?.value});
-  if(r.ok){toast('Vendor added');closeModal('modal-vendor');loadVendors();populateVendorSelects();populateMonthFilters();}
-  else toast(r.error,'error');
-}
-
-async function populateVendorSelects(){
-  const vs=await api('/api/vendors');
-  $('in-vendor').innerHTML=vs.map(v=>`<option value="${v.vendor_id}">${v.name}</option>`).join('');
-}
-
-async function openVendorDetail(vid){
-  const d=await api(`/api/vendors/${vid}`);
-  $('vd-content').innerHTML=`
-    <div class="vd-panel">
-      <div class="vd-header">
-        <div class="vd-avatar">${d.name[0]}</div>
-        <div><div class="vd-name">${d.name}</div><div class="vd-meta">${d.category} · ${payBadge(d.payment_method)} · ${d.payment_terms}-day terms</div></div>
-      </div>
-      <div class="vd-grid">
-        ${d.bank_account?`<div class="vd-item"><div class="dl">Bank Account</div><div class="dv">${d.bank_account}</div></div>`:''}
-        ${d.ecocash_number?`<div class="vd-item"><div class="dl">EcoCash</div><div class="dv">${d.ecocash_number}</div></div>`:''}
-        <div class="vd-item"><div class="dl">Bank Name</div><div class="dv">${d.bank_name||'—'}</div></div>
-        <div class="vd-item"><div class="dl">Outstanding</div><div class="dv" style="color:var(--accent)">${fmtM(d.total_outstanding)}</div></div>
-        <div class="vd-item"><div class="dl">Month Added</div><div class="dv">${fmtMonth(d.created_month)}</div></div>
-      </div>
-    </div>
-    <div class="table-scroll"><table><thead><tr><th>Invoice #</th><th>Date</th><th>Amount</th><th>Outstanding</th><th>Status</th></tr></thead>
-    <tbody>${(d.invoices||[]).map(i=>`<tr><td>${i.invoice_number}</td><td>${i.invoice_date}</td><td class="amount">${fmtM(i.total_amount)}</td><td class="amount">${fmtM(i.outstanding_amount)}</td><td>${statusBadge(i.status)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">No invoices</td></tr>'}</tbody></table></div>`;
-  openModal('modal-vendor-detail');
-}
-
-// ── Invoices ──────────────────────────────────────────────────────────────────
-async function loadInvoices(){
-  const rows=await api(`/api/invoices?status=${$('i-status').value}&month=${$('i-month').value}&search=${encodeURIComponent($('i-search').value)}`);
-  $('invoices-tbl').innerHTML=rows.length?rows.map(r=>{
-    const canSubmit=r.status==='Draft', canVerify=r.status==='Submitted', canApprove=r.status==='Verified';
-    const canReject=['Submitted','Verified'].includes(r.status), canPay=['Approved','Scheduled','Partially Paid'].includes(r.status), canSched=r.status==='Approved';
-    return `<tr>
-      <td class="amount">${r.invoice_number}</td><td>${r.vendor_name}</td>
-      <td style="font-size:11px;color:var(--muted)">${r.month_label||''}</td>
-      <td class="amount">${r.cost_centre_number||'—'}</td>
-      <td class="amount">${fmtM(r.total_amount)}</td><td class="amount">${fmtM(r.outstanding_amount)}</td>
-      <td>${statusBadge(r.status)}</td><td>${ageBadge(r.age_bucket)}</td>
-      <td style="display:flex;gap:4px;flex-wrap:wrap">
-        ${canSubmit?`<button class="btn btn-ghost btn-sm" onclick="openWf('${r.invoice_id}','submit','Submit')">Submit</button>`:''}
-        ${canVerify?`<button class="btn btn-ghost btn-sm" onclick="openWf('${r.invoice_id}','verify','Verify')">Verify</button>`:''}
-        ${canApprove?`<button class="btn btn-success btn-sm" onclick="openWf('${r.invoice_id}','approve','Approve')">Approve</button>`:''}
-        ${canReject?`<button class="btn btn-danger btn-sm" onclick="openWf('${r.invoice_id}','reject','Reject')">Reject</button>`:''}
-        ${canSched?`<button class="btn btn-ghost btn-sm" onclick="openAddBatch('${r.invoice_id}','${r.outstanding_amount}','${r.invoice_number}')">Schedule</button>`:''}
-        ${canPay?`<button class="btn btn-primary btn-sm" onclick="openPay('${r.invoice_id}','${r.outstanding_amount}','${r.invoice_number}','${r.vendor_pay_method||'Bank'}')">Pay</button>`:''}
-        <button class="btn btn-ghost btn-sm" onclick="openAudit('${r.invoice_id}','${r.invoice_number}')">Log</button>
-      </td>
-    </tr>`;
-  }).join(''):`<tr><td colspan="9" class="empty">No invoices found</td></tr>`;
-}
-
-async function submitInvoice(){
-  const num=$('in-num').value.trim(),vid=$('in-vendor').value,idate=$('in-date').value,desc=$('in-desc').value.trim(),amount=parseFloat($('in-amt').value),by=$('in-by').value.trim();
-  if(!num||!vid||!idate||!desc||!amount||!by){toast('Fill all required fields','error');return;}
-  const r=await api('/api/invoices','POST',{invoice_number:num,vendor_id:vid,invoice_date:idate,due_date:$('in-due').value||null,description:desc,total_amount:amount,cost_centre_number:$('in-ccn').value||null,cost_centre_name:$('in-ccname').value,doc_reference:$('in-doc').value,created_by:by});
-  if(r.ok){toast('Invoice created');closeModal('modal-invoice');loadInvoices();populateMonthFilters();}
-  else toast(r.error,'error');
-}
-
-// ── Workflow ──────────────────────────────────────────────────────────────────
-function openWf(id,action,label){
-  _wfInvoiceId=id; _wfAction=action;
-  $('wf-title').textContent=label+' Invoice';
-  $('wf-sub').textContent='Invoice: '+id.substring(0,8)+'…';
-  $('wf-notes-lbl').textContent=action==='reject'?'Rejection Reason *':'Notes (optional)';
-  $('wf-notes').value=''; openModal('modal-workflow');
-}
-async function submitWorkflow(){
-  const r=await api(`/api/invoices/${_wfInvoiceId}/workflow`,'POST',{action:_wfAction,performed_by:$('wf-by').value||'system',notes:$('wf-notes').value});
-  if(r.ok){toast(`Status → ${r.new_status}`);closeModal('modal-workflow');loadInvoices();}
-  else toast(r.error,'error');
-}
-
-// ── Payment ───────────────────────────────────────────────────────────────────
-function openPay(id,outstanding,invNo,payMethod){
-  _payInvoiceId=id; _payMax=parseFloat(outstanding);
-  $('pay-sub').textContent=`Invoice: ${invNo} · Outstanding: ${fmtM(outstanding)}`;
-  $('pay-amt').value=outstanding; $('pay-date').value=today();
-  for(let o of $('pay-method').options){if(o.value===payMethod){o.selected=true;break;}}
-  openModal('modal-payment');
-}
-async function submitPayment(){
-  const amount=parseFloat($('pay-amt').value),dt=$('pay-date').value,by=$('pay-by').value.trim();
-  if(!amount||!dt||!by){toast('Fill all required fields','error');return;}
-  if(amount>_payMax){toast('Amount exceeds outstanding balance','error');return;}
-  const r=await api('/api/payments','POST',{invoice_id:_payInvoiceId,payment_date:dt,amount_paid:amount,payment_method:$('pay-method').value,bank_reference:$('pay-ref').value,recorded_by:by});
-  if(r.ok){toast(`Payment recorded — ${r.new_status}`);closeModal('modal-payment');loadInvoices();}
-  else toast(r.error,'error');
-}
-
-// ── Batches ───────────────────────────────────────────────────────────────────
-async function loadBatches(){
-  const rows=await api('/api/batches');
-  $('batches-tbl').innerHTML=rows.length?rows.map(r=>`<tr>
-    <td><strong>${r.batch_reference}</strong></td><td>${r.scheduled_date}</td>
-    <td>${r.invoice_count}</td><td>${r.vendor_count} vendor(s)</td>
-    <td class="amount">${fmtM(r.total_scheduled)}</td><td>${r.created_by}</td>
-    <td><button class="btn btn-ghost btn-sm" onclick="viewBatchItems('${r.batch_id}','${r.batch_reference}')">View</button></td>
-  </tr>`).join(''):`<tr><td colspan="7" class="empty">No batches yet</td></tr>`;
-}
-
-async function viewBatchItems(bid,bref){
-  const items=await api(`/api/batches/${bid}/items`);
-  $('bi-title').textContent=`Batch: ${bref}`; $('bi-sub').textContent=`${items.length} invoice(s)`;
-  $('bi-tbl').innerHTML=items.length?items.map(i=>`<tr><td>${i.vendor_name}</td><td>${i.invoice_number}</td><td>${payBadge(i.payment_method)}</td><td class="amount">${i.bank_account||i.ecocash_number||'—'}</td><td class="amount">${fmtM(i.scheduled_amount)}</td><td>${statusBadge(i.status)}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">No items</td></tr>`;
-  openModal('modal-batch-items');
-}
-
-async function submitBatch(){
-  const ref=$('b-ref').value.trim(),sdate=$('b-date').value,by=$('b-by').value.trim();
-  if(!ref||!sdate||!by){toast('Fill all required fields','error');return;}
-  const r=await api('/api/batches','POST',{batch_reference:ref,scheduled_date:sdate,notes:$('b-notes').value,created_by:by});
-  if(r.ok){toast('Batch created');closeModal('modal-batch');loadBatches();}
-  else toast(r.error,'error');
-}
-
-async function openAddBatch(invoiceId,outstanding,invNo){
-  _abInvoiceId=invoiceId;
-  $('ab-sub').textContent=`Invoice: ${invNo} · Outstanding: ${fmtM(outstanding)}`;
-  $('ab-amt').value=outstanding;
-  const batches=await api('/api/batches');
-  $('ab-bid').innerHTML=batches.length?batches.map(b=>`<option value="${b.batch_id}">${b.batch_reference} (${b.scheduled_date})</option>`).join(''):'<option disabled>No batches — create one first</option>';
-  openModal('modal-add-batch');
-}
-async function submitAddBatch(){
-  const bid=$('ab-bid').value,amount=parseFloat($('ab-amt').value),by=$('ab-by').value.trim();
-  if(!bid||!amount||!by){toast('Fill all required fields','error');return;}
-  const r=await api(`/api/batches/${bid}/items`,'POST',{invoice_id:_abInvoiceId,scheduled_amount:amount,added_by:by});
-  if(r.ok){toast('Invoice scheduled');closeModal('modal-add-batch');loadInvoices();loadBatches();}
-  else toast(r.error,'error');
-}
-
-// ── Reports ───────────────────────────────────────────────────────────────────
-async function loadOutstanding(){
-  const rows=await api(`/api/reports/outstanding?month=${$('out-month').value}`);
-  const total=rows.reduce((s,r)=>s+r.total_outstanding,0);
-  $('out-tbl').innerHTML=rows.length?rows.map(r=>`<tr><td><strong>${r.vendor}</strong></td><td>${r.category}</td><td>${payBadge(r.payment_method)}</td><td class="amount">${r.bank_account||r.ecocash_number||'—'}</td><td>${r.invoice_count}</td><td class="amount"><strong>${fmtM(r.total_outstanding)}</strong></td></tr>`).join(''):`<tr><td colspan="6" class="empty">No outstanding</td></tr>`;
-  $('out-foot').innerHTML=`<td colspan="5" style="font-weight:600;padding:10px 14px">Grand Total</td><td class="amount" style="font-weight:600;padding:10px 14px">${fmtM(total)}</td>`;
-}
-
-async function loadAging(){
-  const d=await api(`/api/reports/aging?month=${$('age-month').value}`);
-  const buckets=['0-30 days','31-60 days','61-90 days','91+ days'];
-  $('aging-tbl').innerHTML=(d.vendors||[]).length?(d.vendors||[]).map(r=>`<tr><td><strong>${r.vendor}</strong></td>${buckets.map(b=>`<td class="amount">${fmtM(r[b]||0)}</td>`).join('')}<td class="amount"><strong>${fmtM(r.total)}</strong></td></tr>`).join(''):`<tr><td colspan="6" class="empty">No data</td></tr>`;
-  const t=d.totals||{};
-  $('aging-foot').innerHTML=`<td style="font-weight:600;padding:9px 14px">Total</td>${buckets.map(b=>`<td class="amount" style="font-weight:600;padding:9px 14px">${fmtM(t[b]||0)}</td>`).join('')}<td class="amount" style="font-weight:600;padding:9px 14px">${fmtM(d.grand_total||0)}</td>`;
-}
-
-async function loadBacklog(){
-  const rows=await api(`/api/reports/backlog?month=${$('bl-month').value}`);
-  $('backlog-tbl').innerHTML=rows.length?rows.map(r=>`<tr>
-    <td class="amount">${r.invoice_number}</td><td>${r.vendor_name}</td>
-    <td style="font-size:11px;color:var(--muted)">${fmtMonth(r.invoice_month)}</td>
-    <td class="amount">${r.cost_centre_number||'—'}</td>
-    <td class="amount">${fmtM(r.total_amount)}</td><td>${statusBadge(r.status)}</td>
-    <td style="display:flex;gap:4px">
-      ${r.status==='Draft'?`<button class="btn btn-ghost btn-sm" onclick="openWf('${r.invoice_id}','submit','Submit')">Submit</button>`:''}
-      ${r.status==='Submitted'?`<button class="btn btn-ghost btn-sm" onclick="openWf('${r.invoice_id}','verify','Verify')">Verify</button>`:''}
-      ${r.status==='Verified'?`<button class="btn btn-success btn-sm" onclick="openWf('${r.invoice_id}','approve','Approve')">Approve</button>`:''}
-      ${['Submitted','Verified'].includes(r.status)?`<button class="btn btn-danger btn-sm" onclick="openWf('${r.invoice_id}','reject','Reject')">Reject</button>`:''}
-    </td>
-  </tr>`).join(''):`<tr><td colspan="7" class="empty">No invoices pending approval</td></tr>`;
-}
-
-async function loadRejections(){
-  const d=await api(`/api/reports/rejections?month=${$('rej-month').value}`);
-  const grouped=d.grouped||{};
-  const keys=Object.keys(grouped);
-  $('rej-content').innerHTML=keys.length?keys.map(m=>`
-    <div class="month-group">
-      <div class="month-heading">${m} — ${grouped[m].length} rejection(s)</div>
-      ${grouped[m].map(r=>`<div class="rej-card"><div class="rej-vendor">${r.vendor_name} — <span class="amount">${r.invoice_number}</span> — ${fmtM(r.total_amount)}</div><div class="rej-reason">Reason: ${r.rejection_reason||'Not specified'}</div><div class="rej-meta">Rejected by ${r.rejected_by||'—'} · ${r.rejected_at||'—'}</div></div>`).join('')}
-    </div>`).join(''):`<div class="empty" style="padding:40px">No rejected invoices</div>`;
-}
-
-async function loadSchedule(){
-  const rows=await api('/api/reports/schedule');
-  $('sched-tbl').innerHTML=rows.length?rows.map(r=>`<tr><td>${r.batch_reference}</td><td>${r.scheduled_date}</td><td>${r.vendor}</td><td>${r.invoice_number}</td><td>${payBadge(r.payment_method)}</td><td class="amount">${r.bank_account||r.ecocash_number||'—'}</td><td class="amount">${fmtM(r.scheduled_amount)}</td></tr>`).join(''):`<tr><td colspan="7" class="empty">No scheduled payments</td></tr>`;
-}
-
-async function loadMonthlySummary(){
-  const rows=await api('/api/reports/monthly_summary');
-  destroyChart('monthly');
-  _charts['monthly']=new Chart($('chart-monthly'),{
-    type:'bar',
-    data:{labels:rows.map(r=>fmtMonth(r.invoice_month)).reverse(),
-      datasets:[
-        {label:'Invoiced',data:rows.map(r=>r.total_amount).reverse(),backgroundColor:'rgba(79,142,247,.6)',borderRadius:3},
-        {label:'Paid',data:rows.map(r=>r.paid_amount).reverse(),backgroundColor:'rgba(34,211,165,.7)',borderRadius:3},
-      ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#6b7a99',font:{size:11}}}},
-      scales:{y:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k',color:'#6b7a99'},grid:{color:'rgba(255,255,255,.04)'}},
-              x:{ticks:{color:'#6b7a99'},grid:{display:false}}}}
-  });
-  $('monthly-tbl').innerHTML=rows.length?rows.map(r=>`<tr><td><strong>${fmtMonth(r.invoice_month)}</strong></td><td>${r.total_invoices}</td><td class="amount">${fmtM(r.total_amount)}</td><td class="amount" style="color:var(--success)">${fmtM(r.paid_amount)}</td><td class="amount" style="color:var(--accent)">${fmtM(r.outstanding_amount)}</td><td style="color:var(--danger)">${r.rejected_count}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">No data</td></tr>`;
-}
-
-// ── Audit Trail ───────────────────────────────────────────────────────────────
-async function openAudit(id,invNo){
-  const d=await api(`/api/invoices/${id}`);
-  $('aud-title').textContent=`Audit: ${invNo}`;
-  $('aud-sub').textContent=`${d.vendor_name} · ${fmtM(d.total_amount)} · ${d.status}`;
-  $('aud-tl').innerHTML=(d.audit||[]).map((lg,i,arr)=>{
-    const isLast=i===arr.length-1;
-    const dotCls=lg.to_status==='Rejected'?'tl-dot rejected':lg.to_status==='Paid'?'tl-dot paid':'tl-dot';
-    return `<div class="tl-item"><div style="position:relative"><div class="${dotCls}"></div>${isLast?'':'<div class="tl-line"></div>'}</div><div><div class="tl-action">${lg.action}${lg.notes?` <span style="color:var(--muted);font-weight:400">— ${lg.notes}</span>`:''}</div><div class="tl-meta">${lg.from_status?lg.from_status+' → ':''} ${lg.to_status} · ${lg.performed_by} · ${lg.performed_at}</div></div></div>`;
-  }).join('')||'<p style="color:var(--muted);font-size:12px">No log entries.</p>';
-  openModal('modal-audit');
-}
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', ()=>{
-  $('in-date').value=today();
-  api('/api/me').then(r=>{
-    if(r.username){
-      currentUser=r;
-      $('u-init').textContent=r.initials; $('u-name').textContent=r.username; $('u-role').textContent=r.role;
-      ['in-by','wf-by','pay-by','ab-by','b-by'].forEach(id=>{const el=$(id);if(el)el.value=r.username});
-      $('login-page').style.display='none'; $('app').style.display='flex';
-      populateMonthFilters(); nav('dashboard');
+// Auto-check session on load
+window.addEventListener('load', async()=>{
+  const d = await api('/api/me');
+  if(d.username) { currentUser=d; enterApp(d); }
+  else { $('auth-screen').style.display='flex'; }
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      if(document.getElementById('af-login').classList.contains('active')) doLogin();
+      else if(document.getElementById('af-register').classList.contains('active')) doRegister();
     }
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// MONTH FILTERS
+// ═══════════════════════════════════════════════════════════════════
+async function populateMonthFilters() {
+  const months = await api('/api/invoices/months');
+  const selects = ['inv-month','rep-month','rej-month','aging-month'];
+  selects.forEach(id=>{
+    const s=$(id); if(!s) return;
+    months.forEach(m=>{
+      const o=document.createElement('option'); o.value=m; o.textContent=m; s.appendChild(o);
+    });
+  });
+}
+
+async function populateVendorSelects() {
+  const vendors = await api('/api/vendors');
+  const selects = ['i-vendor','ti-vendor'];
+  selects.forEach(id=>{
+    const s=$(id); if(!s) return;
+    s.innerHTML = '<option value="">Select vendor...</option>';
+    vendors.forEach(v=>{
+      const o=document.createElement('option'); o.value=v.vendor_id; o.textContent=v.name; s.appendChild(o);
+    });
+  });
+  // Approved invoices for batch
+  const approved = await api('/api/invoices?status=Approved');
+  const bl=$('b-inv-list');
+  if(bl){
+    if(!approved.length){bl.innerHTML='<div style="color:var(--muted);font-size:.78rem;padding:4px">No approved invoices</div>';return;}
+    bl.innerHTML = approved.map(i=>`
+      <label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:.8rem;cursor:pointer">
+        <input type="checkbox" data-id="${i.invoice_id}" data-amt="${i.outstanding_amount}" style="accent-color:var(--gold)">
+        <span>${i.vendor_name} — ${i.invoice_number} — ${fmt(i.outstanding_amount)}</span>
+      </label>`).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════════
+async function loadDashboard() {
+  const d = await api('/api/reports/dashboard');
+  // ── Currency helper ──────────────────────────────────────────────────
+  const fmtZiG = n => 'ZiG '+Number(n||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  $('kpi-row').innerHTML = `
+    <div class="kpi gold"><div class="kpi-label">Total Outstanding</div>
+      <div class="kpi-value">${fmt(d.total_outstanding)}</div><div class="kpi-sub">All currencies combined</div></div>
+    <div class="kpi warn"><div class="kpi-label">Pending Approval</div>
+      <div class="kpi-value">${d.pending_approval}</div><div class="kpi-sub">Invoices in pipeline</div></div>
+    <div class="kpi green"><div class="kpi-label">Paid This Month</div>
+      <div class="kpi-value">${fmt(d.paid_this_month)}</div><div class="kpi-sub">Month to date (USD)</div></div>
+    <div class="kpi red"><div class="kpi-label">91+ Days Overdue</div>
+      <div class="kpi-value">${d.overdue_91plus}</div><div class="kpi-sub">Critical invoices</div></div>
+    <div class="kpi blue"><div class="kpi-label">Scheduled</div>
+      <div class="kpi-value">${fmt(d.scheduled_total)}</div><div class="kpi-sub">In payment batches</div></div>
+    <div class="kpi gold"><div class="kpi-label">Total Vendors</div>
+      <div class="kpi-value">${d.total_vendors}</div><div class="kpi-sub">Registered suppliers</div></div>
+    <div class="kpi usd"><div class="kpi-label" style="display:flex;align-items:center;gap:5px">
+        <span class="curr-badge curr-usd">USD</span>Outstanding (USD)
+      </div>
+      <div class="kpi-value kpi-usd-val">${fmt(d.outstanding_usd||0)}</div>
+      <div class="kpi-sub">${d.invoices_usd||0} open invoice(s)</div></div>
+    <div class="kpi zig"><div class="kpi-label" style="display:flex;align-items:center;gap:5px">
+        <span class="curr-badge curr-zig">ZiG</span>Outstanding (ZiG)
+      </div>
+      <div class="kpi-value kpi-zig-val">${fmtZiG(d.outstanding_zig||0)}</div>
+      <div class="kpi-sub">${d.invoices_zig||0} open invoice(s)</div></div>`;
+  // Charts
+  destroyChart('ch-top');
+  // Split vendors by currency for colour coding
+  const topColors = d.top_vendors.map(v=>(v.currency||'USD')==='ZiG'?'rgba(167,139,250,.75)':'rgba(200,150,12,.75)');
+  const topBorders = d.top_vendors.map(v=>(v.currency||'USD')==='ZiG'?'#a78bfa':'#c9960c');
+  charts['ch-top'] = new Chart($('ch-top'),{type:'bar',data:{
+    labels:d.top_vendors.map(v=>v.name.slice(0,16)+(v.currency&&v.currency!=='USD'?' (ZiG)':' (USD)')),
+    datasets:[{label:'Outstanding',data:d.top_vendors.map(v=>v.outstanding),
+      backgroundColor:topColors,borderColor:topBorders,borderWidth:1,borderRadius:6}]
+  },options:{responsive:true,plugins:{legend:{display:false},
+    tooltip:{callbacks:{label:ctx=>{
+      const v=d.top_vendors[ctx.dataIndex];
+      const curr=(v.currency||'USD');
+      return curr==='ZiG'?'ZiG '+ctx.raw.toLocaleString('en',{minimumFractionDigits:2}):'$'+ctx.raw.toLocaleString('en',{minimumFractionDigits:2});
+    }}}},
+  scales:{
+    x:{ticks:{color:'#7a6a40',font:{size:10}},grid:{color:'#1a1500'}},
+    y:{ticks:{color:'#7a6a40',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'#1a1500'}}}}});
+  // Status donut
+  const invs = await api('/api/invoices');
+  const counts={};
+  invs.forEach(i=>{counts[i.status]=(counts[i.status]||0)+1});
+  const cols={'Draft':'#6b7280','Submitted':'#4A90D9','Verified':'#f59e0b','Approved':'#3DCC78',
+    'Scheduled':'#c084fc','Partially Paid':'#fb923c','Paid':'#22c55e','Rejected':'#e05050'};
+  destroyChart('ch-status');
+  charts['ch-status'] = new Chart($('ch-status'),{type:'doughnut',data:{
+    labels:Object.keys(counts),
+    datasets:[{data:Object.values(counts),backgroundColor:Object.keys(counts).map(k=>cols[k]||'#888'),
+      borderColor:'#111',borderWidth:2}]
+  },options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#7a6a40',font:{size:10},boxWidth:10}}}}});
+}
+
+function destroyChart(id) { if(charts[id]){charts[id].destroy();delete charts[id];} }
+
+// ═══════════════════════════════════════════════════════════════════
+// KPIs
+// ═══════════════════════════════════════════════════════════════════
+async function loadKPIs() {
+  const d = await api('/api/kpis');
+  $('kpi-tracker').innerHTML = d.kpis.map(k=>{
+    const pct = k.target ? Math.min(100, (k.value/k.target)*100) : 50;
+    const cls = k.status==='green'?'kpi-green':k.status==='amber'?'kpi-amber':k.status==='red'?'kpi-red':'kpi-info';
+    return `<div class="kpi-t ${cls}">
+      <div class="kpi-t-name">${k.name}</div>
+      <div class="kpi-t-val">${k.value}${k.unit||''}</div>
+      ${k.target?`<div class="kpi-t-target">Target: ${k.target}${k.unit}</div>`:''}
+      <div class="kpi-t-bar"><div class="kpi-t-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  loadNotifLog();
+}
+
+async function sendNotification() {
+  const type=$('notif-type').value, target=$('notif-target').value, msg=$('notif-msg').value.trim();
+  if(!msg){toast('Enter a message','error');return;}
+  const d = await api('/api/notifications/send',{method:'POST',body:JSON.stringify({type,target,message:msg})});
+  if(d.ok){toast('Notification sent: '+d.message,'success');$('notif-msg').value='';loadNotifLog();}
+}
+// Show/hide custom email field
+document.addEventListener('DOMContentLoaded', () => {
+  const nt = $('n-target');
+  if(nt) nt.addEventListener('change', () => {
+    const wrap = $('n-custom-wrap');
+    if(wrap) wrap.style.display = nt.value === 'custom' ? '' : 'none';
+  });
+});
+
+async function sendNotifPage() {
+  const type    = $('n-type').value;
+  const target  = $('n-target').value;
+  const msg     = $('n-msg').value.trim();
+  const subject = $('n-subject')?.value.trim() || '';
+  const extras  = $('n-extra-emails')?.value.trim() || '';
+
+  if(!msg){ toast('Please enter a message','error'); return; }
+
+  const resultEl = $('send-result');
+  if(resultEl){ resultEl.style.display=''; resultEl.textContent='Sending…'; resultEl.style.color='var(--muted)'; }
+
+  const d = await api('/api/notifications/send', {
+    method: 'POST',
+    body: JSON.stringify({
+      type,
+      target: target === 'custom' ? '' : target,
+      message: msg,
+      subject: subject || `ZCDC — ${type.replace(/_/g,' ')}`,
+      extra_emails: extras
+    })
+  });
+
+  if(d.ok) {
+    const msg_text = d.message || 'Sent';
+    toast(msg_text, 'success');
+    if(resultEl){ resultEl.textContent = msg_text; resultEl.style.color = 'var(--green)'; }
+    $('n-msg').value = '';
+    if($('n-subject')) $('n-subject').value = '';
+    loadNotifLog();
+  } else {
+    const err = d.error || 'Failed to send';
+    toast(err, 'error');
+    if(resultEl){ resultEl.textContent = '❌ ' + err; resultEl.style.color = 'var(--red)'; }
+  }
+}
+async function loadNotifLog() {
+  const rows = await api('/api/notifications/log');
+  const tbody = $('notif-log-full');
+  if(!tbody) return;
+  tbody.innerHTML = rows.length ? rows.map(r=>`<tr>
+    <td style="font-size:11px;color:var(--muted);white-space:nowrap">${(r.sent_at||'').slice(0,16)}</td>
+    <td><span style="font-size:10px;font-weight:600;background:rgba(200,150,12,.15);color:var(--gold);border-radius:4px;padding:2px 6px">${(r.type||'').replace(/_/g,' ').toUpperCase()}</span></td>
+    <td style="font-size:11px;color:var(--muted)">${r.target||'—'}</td>
+    <td style="font-size:12px">${r.message||'—'}</td>
+    <td style="font-size:11px;color:var(--muted)">${r.sent_by||'—'}</td>
+  </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No emails sent yet</td></tr>';
+}
+
+
+async function loadRanking() {
+  const sort=$('rank-sort').value, type=$('rank-type').value;
+  const data = await api(`/api/analytics/vendor_ranking?sort_by=${sort}&type=${type}`);
+  $('rank-body').innerHTML = data.map((v,i)=>`<tr>
+    <td><span class="rank-num">${i+1}</span></td>
+    <td><strong>${v.vendor}</strong></td>
+    <td>${typeBadge(v.supplier_type)}</td>
+    <td>${v.category}</td>
+    <td>${v.payment_method}</td>
+    <td style="font-family:var(--mono)">${fmt(v.total_invoiced)}</td>
+    <td style="font-family:var(--mono);color:var(--green)">${fmt(v.total_paid)}</td>
+    <td style="font-family:var(--mono);color:${v.outstanding>0?'var(--red)':'var(--green)'}">${fmt(v.outstanding)}</td>
+    <td>${v.invoice_count}</td>
+  </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// VENDORS
+// ═══════════════════════════════════════════════════════════════════
+async function loadVendors() {
+  const search=$('vendor-search')?.value||'', month=$('vendor-month')?.value||'';
+  const data = await api(`/api/vendors?search=${encodeURIComponent(search)}&month=${month}`);
+  $('vendors-body').innerHTML = data.map(v=>`<tr>
+    <td><strong>${v.name}</strong></td>
+    <td>${typeBadge(v.supplier_type)}</td>
+    <td>${v.category}</td>
+    <td>${v.payment_method}</td>
+    <td style="font-family:var(--mono)">${v.bank_account||'—'}</td>
+    <td>${v.ecocash_number||'—'}</td>
+    <td>${v.payment_terms}d</td>
+    <td style="font-family:var(--mono);color:var(--gold)">—</td>
+  </tr>`).join('') || '<tr><td colspan="8" class="empty">No vendors found</td></tr>';
+}
+
+async function addVendor() {
+  if(!canDo('can_add_vendor')) return;
+  const name=$('v-name').value.trim();
+  if(!name){toast('Vendor name required','error');return;}
+  const d = await api('/api/vendors',{method:'POST',body:JSON.stringify({
+    name, category:$('v-cat').value, supplier_type:$('v-type').value,
+    payment_terms:parseInt($('v-terms').value)||30, payment_method:$('v-method').value,
+    bank_name:$('v-bank').value, bank_account:$('v-acc').value, ecocash_number:$('v-eco').value
+  })});
+  if(d.ok){toast('Vendor added!','success');$('v-name').value='';show('vendors');}
+  else toast(d.error||'Error','error');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INVOICES
+// ═══════════════════════════════════════════════════════════════════
+async function loadInvoices() {
+  const status=$('inv-status').value, month=$('inv-month').value, search=$('inv-search').value;
+  const data = await api(`/api/invoices?status=${status}&month=${month}&search=${encodeURIComponent(search)}`);
+  $('invoices-body').innerHTML = data.map(i=>`<tr>
+    <td style="font-family:var(--mono)">${i.invoice_number}</td>
+    <td>${i.vendor_name}</td>
+    <td>${typeBadge(i.supplier_type)}</td>
+    <td>${i.invoice_date}</td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.description}</td>
+    <td><span class="curr-badge ${i.currency==='ZiG'?'curr-zig':'curr-usd'}">${i.currency||'USD'}</span></td>
+    <td style="font-family:var(--mono)">${i.currency==='ZiG'?'ZiG '+Number(i.total_amount||0).toLocaleString('en',{minimumFractionDigits:2}):fmt(i.total_amount)}</td>
+    <td style="font-family:var(--mono);color:${i.outstanding_amount>0?'var(--warn)':'var(--green)'}">${i.currency==='ZiG'?'ZiG '+Number(i.outstanding_amount||0).toLocaleString('en',{minimumFractionDigits:2}):fmt(i.outstanding_amount)}</td>
+    <td>${i.cost_centre_number||'—'} ${i.cost_centre_name?'— '+i.cost_centre_name:''}</td>
+    <td>${statusBadge(i.status)}</td>
+    <td>
+      <button class="btn btn-out btn-sm" onclick="openInvoice('${i.invoice_id}')">View</button>
+      ${i.status in {'Approved':1,'Scheduled':1,'Partially Paid':1}?
+        `<button class="btn btn-green btn-sm" onclick="openPayModal('${i.invoice_id}',${i.outstanding_amount})">Pay</button>`:''}
+    </td>
+  </tr>`).join('') || '<tr><td colspan="10" class="empty">No invoices found</td></tr>';
+}
+
+async function addInvoice() {
+  const num=$('i-num').value.trim(), vendor=$('i-vendor').value, dt=$('i-date').value,
+        desc=$('i-desc').value.trim(), amt=$('i-amt').value;
+  if(!num||!vendor||!dt||!desc||!amt){toast('Fill required fields','error');return;}
+  const d = await api('/api/invoices',{method:'POST',body:JSON.stringify({
+    invoice_number:num, vendor_id:vendor, invoice_date:dt, due_date:$('i-due').value||null,
+    description:desc, total_amount:parseFloat(amt), doc_reference:$('i-ref').value,
+    cost_centre_number:$('i-ccn').value||null, cost_centre_name:$('i-ccname').value,
+    currency:$('i-currency')?.value||'USD',
+    created_by:currentUser?.username||'user'
+  })});
+  if(d.ok){toast('Invoice added!','success');$('i-num').value='';$('i-amt').value='';$('i-desc').value='';show('invoices');}
+  else toast(d.error||'Error','error');
+}
+
+async function openInvoice(id) {
+  const inv = await api('/api/invoices/'+id);
+  const wf = {
+    'Draft':'submit','Submitted':'verify','Verified':'approve'
+  };
+  const nextAction = wf[inv.status];
+  $('modal-inv-title').textContent = `Invoice: ${inv.invoice_number}`;
+  $('modal-inv-body').innerHTML = `
+    <div class="form-row" style="margin-bottom:12px">
+      <div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Vendor</div>
+        <div style="font-weight:600">${inv.vendor_name}</div></div>
+      <div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Status</div>
+        ${statusBadge(inv.status)}</div>
+    </div>
+    <div class="form-row" style="margin-bottom:12px">
+      <div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Total</div>
+        <div style="font-family:var(--mono);color:var(--gl)">${fmt(inv.total_amount)}</div></div>
+      <div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Outstanding</div>
+        <div style="font-family:var(--mono);color:var(--warn)">${fmt(inv.outstanding_amount)}</div></div>
+    </div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">${inv.description}</div>
+    ${inv.rejection_reason?`<div style="background:rgba(224,80,80,.08);border:1px solid rgba(224,80,80,.2);border-radius:8px;padding:8px 12px;font-size:.8rem;color:var(--red);margin-bottom:12px">Rejection reason: ${inv.rejection_reason}</div>`:''}
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:14px">
+      ${nextAction && currentPerms[{submit:'can_submit',verify:'can_verify',approve:'can_approve'}[nextAction]]
+        ? `<button class="btn btn-gold btn-sm" onclick="wfAction('${id}','${nextAction}')">✓ ${nextAction.charAt(0).toUpperCase()+nextAction.slice(1)}</button>` : ''}
+      ${['Submitted','Verified'].includes(inv.status) && currentPerms.can_reject
+        ? `<button class="btn btn-red btn-sm" onclick="wfReject('${id}')">✕ Reject</button>` : ''}
+      ${!nextAction && !['Submitted','Verified'].includes(inv.status)
+        ? `<span style="font-size:.78rem;color:var(--muted);font-style:italic">No actions available for your role on this invoice.</span>` : ''}
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);margin-top:8px"><strong>Audit Trail:</strong></div>
+    ${inv.audit.map(a=>`<div style="font-size:.75rem;padding:3px 0;border-bottom:1px solid var(--faint)">
+      <span style="color:var(--gl)">${a.action}</span> · ${a.performed_by} · ${(a.performed_at||'').slice(0,16)}
+      ${a.notes?`· <em>${a.notes}</em>`:''}
+    </div>`).join('')}`;
+  $('modal-inv').classList.add('open');
+}
+
+async function wfAction(id, action) {
+  const permMap = {submit:'can_submit', verify:'can_verify', approve:'can_approve'};
+  if(!canDo(permMap[action]||'can_submit')) return;
+  const d = await api(`/api/invoices/${id}/workflow`,{method:'POST',
+    body:JSON.stringify({action, performed_by:currentUser?.username||'user'})});
+  if(d.ok){toast(`Invoice ${d.new_status}!`,'success');closeModal('modal-inv');loadInvoices();}
+  else toast(d.error||'Error','error');
+}
+
+async function wfReject(id) {
+  if(!canDo('can_reject')) return;
+  const reason = prompt('Rejection reason (required per IMS-FIN-SOP-01):');
+  if(!reason) return;
+  const d = await api(`/api/invoices/${id}/workflow`,{method:'POST',
+    body:JSON.stringify({action:'reject', notes:reason, performed_by:currentUser?.username||'user'})});
+  if(d.ok){toast('Invoice rejected','info');closeModal('modal-inv');loadInvoices();}
+  else toast(d.error||'Error','error');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAX INVOICES
+// ═══════════════════════════════════════════════════════════════════
+async function addTaxInvoice() {
+  const vendor=$('ti-vendor').value, num=$('ti-num').value.trim(), dt=$('ti-date').value;
+  if(!vendor||!num||!dt){toast('Vendor, invoice number and date required','error');return;}
+  const gross=parseFloat($('ti-gross').value)||0;
+  const vat=parseFloat($('ti-vat').value)||0;
+  const net=parseFloat($('ti-net').value)||gross-vat;
+  const rate=parseFloat($('ti-rate').value)||1;
+  const currency=$('ti-currency').value;
+  const d = await api('/api/tax_invoices',{method:'POST',body:JSON.stringify({
+    vendor_id:vendor, invoice_number:num, invoice_date:dt, tax_type:$('ti-type').value,
+    gross_amount:gross, vat_amount:vat, net_amount:net, currency,
+    exchange_rate:rate, amount_usd:currency==='USD'?net:net/rate,
+    description:$('ti-desc').value, captured_by:currentUser?.username||'user'
+  })});
+  if(d.ok){toast('Tax invoice captured!','success');loadTaxInvoices();}
+  else toast(d.error||'Error','error');
+}
+
+async function loadTaxInvoices() {
+  populateVendorSelects();
+  const data = await api('/api/tax_invoices');
+  $('tax-body').innerHTML = data.map(t=>`<tr>
+    <td style="font-family:var(--mono)">${t.invoice_number}</td>
+    <td>${t.vendor_name}</td>
+    <td>${t.invoice_date}</td>
+    <td><span class="badge b-verified">${t.tax_type}</span></td>
+    <td>${t.currency}</td>
+    <td style="font-family:var(--mono)">${(t.gross_amount||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
+    <td style="font-family:var(--mono)">${(t.vat_amount||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
+    <td style="font-family:var(--mono)">${(t.net_amount||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
+    <td style="font-family:var(--mono);color:var(--gl)">${fmt(t.amount_usd)}</td>
+    <td style="color:var(--muted)">${t.captured_by||'—'}</td>
+  </tr>`).join('') || '<tr><td colspan="10" class="empty">No tax invoices captured yet</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PAYMENTS
+// ═══════════════════════════════════════════════════════════════════
+function openPayModal(id, outstanding) {
+  $('pay-inv-id').value = id;
+  $('pay-amt').value = outstanding;
+  $('pay-date').value = new Date().toISOString().slice(0,10);
+  $('modal-pay').classList.add('open');
+}
+
+async function submitPayment() {
+  const id=$('pay-inv-id').value, amt=parseFloat($('pay-amt').value),
+        dt=$('pay-date').value;
+  if(!dt||isNaN(amt)||amt<=0){toast('Fill all payment fields','error');return;}
+  const d = await api('/api/payments',{method:'POST',body:JSON.stringify({
+    invoice_id:id, amount_paid:amt, payment_date:dt,
+    payment_method:$('pay-method').value, bank_reference:$('pay-ref').value,
+    recorded_by:currentUser?.username||'user'
+  })});
+  if(d.ok){toast(`Payment recorded! Status: ${d.new_status}`,'success');closeModal('modal-pay');loadInvoices();}
+  else toast(d.error||'Error','error');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BATCHES
+// ═══════════════════════════════════════════════════════════════════
+async function createBatch() {
+  const ref=$('b-ref').value.trim(), dt=$('b-date').value;
+  if(!ref||!dt){toast('Reference and date required','error');return;}
+  const checked = [...document.querySelectorAll('#b-inv-list input[type=checkbox]:checked')];
+  if(!checked.length){toast('Select at least one invoice','error');return;}
+  const items = checked.map(c=>({invoice_id:c.dataset.id, scheduled_amount:parseFloat(c.dataset.amt)}));
+  const d = await api('/api/batches',{method:'POST',body:JSON.stringify({
+    batch_reference:ref, scheduled_date:dt, notes:$('b-notes').value,
+    created_by:currentUser?.username||'user', items
+  })});
+  if(d.ok){toast('Batch created!','success');$('b-ref').value='';loadBatches();}
+  else toast(d.error||'Error','error');
+}
+
+async function loadBatches() {
+  populateVendorSelects();
+  const data = await api('/api/batches');
+  $('batches-body').innerHTML = data.map(b=>`<tr>
+    <td style="font-family:var(--mono)">${b.batch_reference}</td>
+    <td>${b.scheduled_date}</td>
+    <td>${b.invoice_count}</td>
+    <td>${b.vendor_count}</td>
+    <td style="font-family:var(--mono);color:var(--gl)">${fmt(b.total_scheduled)}</td>
+    <td style="color:var(--muted)">${b.created_by}</td>
+  </tr>`).join('') || '<tr><td colspan="6" class="empty">No batches yet</td></tr>';
+}
+
+async function loadSchedule() {
+  const data = await api('/api/reports/schedule');
+  $('schedule-body').innerHTML = data.map(s=>`<tr>
+    <td style="font-family:var(--mono)">${s.batch_reference}</td>
+    <td>${s.scheduled_date}</td>
+    <td>${s.vendor}</td>
+    <td style="font-family:var(--mono)">${s.invoice_number}</td>
+    <td>${s.payment_method}</td>
+    <td style="font-family:var(--mono)">${s.bank_account||s.ecocash_number||'—'}</td>
+    <td style="font-family:var(--mono);color:var(--gl)">${fmt(s.scheduled_amount)}</td>
+    <td><button class="btn btn-green btn-sm" onclick="openPayModal('${s.invoice_id}',${s.scheduled_amount})">Pay</button></td>
+  </tr>`).join('') || '<tr><td colspan="8" class="empty">No scheduled payments</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RISK SCORECARD
+// ═══════════════════════════════════════════════════════════════════
+async function loadRisk() {
+  const data = await api('/api/analytics/vendor_risk');
+  const critical = data.filter(v=>v.risk_score>=70);
+  const high = data.filter(v=>v.risk_score>=50&&v.risk_score<70);
+  $('risk-alerts').innerHTML = [
+    ...critical.map(v=>`<div class="card" style="background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);margin-bottom:8px">
+      🚨 <strong style="color:#fca5a5">${v.vendor}</strong> — Risk Score: ${v.risk_score} (Critical) — Outstanding: ${fmt(v.outstanding)}
+    </div>`),
+    ...high.map(v=>`<div class="card" style="background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);margin-bottom:8px">
+      ⚠️ <strong style="color:#fca5a5">${v.vendor}</strong> — Risk Score: ${v.risk_score} (High) — ${v.oldest_invoice_age_days} days oldest
+    </div>`)
+  ].join('');
+  $('risk-list').innerHTML = data.map(v=>`
+    <div class="risk-row">
+      <div class="risk-circle risk-${v.risk_color}">${v.risk_score}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:500;font-size:13px">${v.vendor}</div>
+        <div style="font-size:11px;color:var(--muted)">${v.category} · ${v.open_invoices} open · Age: ${v.oldest_invoice_age_days}d · Rejections: ${v.rejection_count}</div>
+        <div class="risk-bar-bg"><div class="risk-bar-fill risk-${v.risk_color}" style="width:${v.risk_score}%;background:var(--risk-${v.risk_color})"></div></div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:var(--mono);font-size:13px;color:var(--warn)">${fmt(v.outstanding)}</div>
+        <div style="font-size:10px;color:var(--muted)">outstanding</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CASH PROJECTION
+// ═══════════════════════════════════════════════════════════════════
+async function loadProjection() {
+  const d = await api('/api/analytics/cash_projection');
+  const weeks = d.weeks.slice(0,8);
+  destroyChart('ch-proj');
+  charts['ch-proj'] = new Chart($('ch-proj'),{type:'bar',data:{
+    labels:weeks.map(w=>w.label),
+    datasets:[
+      {label:'Scheduled',data:weeks.map(w=>w.scheduled),backgroundColor:'rgba(61,204,120,.7)',borderRadius:4},
+      {label:'Projected',data:weeks.map(w=>w.projected),backgroundColor:'rgba(200,150,12,.5)',borderRadius:4}
+    ]
+  },options:{responsive:true,scales:{
+    x:{stacked:true,ticks:{color:'#7a6a40',font:{size:10}},grid:{color:'#1a1500'}},
+    y:{stacked:true,ticks:{color:'#7a6a40',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'#1a1500'}}
+  },plugins:{legend:{labels:{color:'#7a6a40',font:{size:10}}}}}});
+  $('proj-weeks').innerHTML = weeks.map(w=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <div style="font-size:10px;color:var(--muted)">${w.label}</div>
+      <div style="font-size:14px;font-weight:600;font-family:var(--mono);color:var(--gl)">${fmt(w.total)}</div>
+      <div style="font-size:10px;color:var(--green)">Sched: ${fmt(w.scheduled)}</div>
+      <div style="font-size:10px;color:var(--gold-dim)">Proj: ${fmt(w.projected)}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// WORKING CAPITAL
+// ═══════════════════════════════════════════════════════════════════
+async function loadWorkingCapital() {
+  const d = await api('/api/analytics/working_capital');
+  $('wc-kpis').innerHTML = `
+    <div class="kpi gold"><div class="kpi-label">Days Payable Outstanding</div>
+      <div class="kpi-value">${d.dpo}</div><div class="kpi-sub">days (DPO)</div></div>
+    <div class="kpi warn"><div class="kpi-label">AP Turnover</div>
+      <div class="kpi-value">${d.ap_turnover}x</div><div class="kpi-sub">times per year</div></div>
+    <div class="kpi green"><div class="kpi-label">Total Paid</div>
+      <div class="kpi-value">${fmt(d.total_paid)}</div><div class="kpi-sub">all time</div></div>
+    <div class="kpi blue"><div class="kpi-label">Avg Approval Cycle</div>
+      <div class="kpi-value">${d.avg_approval_cycle_days}</div><div class="kpi-sub">days</div></div>`;
+  destroyChart('ch-velocity');
+  charts['ch-velocity'] = new Chart($('ch-velocity'),{type:'line',data:{
+    labels:d.payment_velocity_trend.map(t=>t.month),
+    datasets:[
+      {label:'Invoiced',data:d.payment_velocity_trend.map(t=>t.invoiced),borderColor:'var(--warn)',backgroundColor:'rgba(245,158,11,.1)',tension:.4,fill:true},
+      {label:'Paid',data:d.payment_velocity_trend.map(t=>t.paid),borderColor:'var(--green)',backgroundColor:'rgba(61,204,120,.1)',tension:.4,fill:true}
+    ]
+  },options:{responsive:true,scales:{
+    x:{ticks:{color:'#7a6a40',font:{size:10}},grid:{color:'#1a1500'}},
+    y:{ticks:{color:'#7a6a40',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'#1a1500'}}
+  },plugins:{legend:{labels:{color:'#7a6a40',font:{size:10}}}}}});
+  $('wc-metrics').innerHTML = `
+    <div style="font-size:.8rem;color:var(--muted);line-height:2.2">
+      <div>Total Purchases: <strong style="color:var(--text)">${fmt(d.total_purchases)}</strong></div>
+      <div>Total AP: <strong style="color:var(--warn)">${fmt(d.total_ap)}</strong></div>
+      <div>DPO: <strong style="color:var(--gl)">${d.dpo} days</strong></div>
+      <div>AP Turnover: <strong style="color:var(--gl)">${d.ap_turnover}x</strong></div>
+      <div>Avg Approval: <strong style="color:var(--gl)">${d.avg_approval_cycle_days} days</strong></div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// AGING
+// ═══════════════════════════════════════════════════════════════════
+async function loadAging() {
+  const month=$('aging-month').value;
+  const d = await api('/api/reports/aging?month='+month);
+  const buckets=['0-30 days','31-60 days','61-90 days','91+ days'];
+  const bcolors=['rgba(61,204,120,.7)','rgba(245,158,11,.7)','rgba(251,146,60,.7)','rgba(224,80,80,.7)'];
+  destroyChart('ch-aging');
+  charts['ch-aging'] = new Chart($('ch-aging'),{type:'bar',data:{
+    labels:buckets,
+    datasets:[{label:'Outstanding',data:buckets.map(b=>d.totals[b]||0),
+      backgroundColor:bcolors,borderRadius:6}]
+  },options:{responsive:true,plugins:{legend:{display:false}},scales:{
+    x:{ticks:{color:'#7a6a40',font:{size:11}},grid:{color:'#1a1500'}},
+    y:{ticks:{color:'#7a6a40',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'#1a1500'}}}}});
+  $('aging-body').innerHTML = d.vendors.map(v=>`<tr>
+    <td><strong>${v.vendor}</strong></td>
+    ${buckets.map(b=>`<td style="font-family:var(--mono)">${fmt(v[b]||0)}</td>`).join('')}
+    <td style="font-family:var(--mono);font-weight:600;color:var(--warn)">${fmt(v.total)}</td>
+  </tr>`).join('') || '<tr><td colspan="6" class="empty">No aging data</td></tr>';
+  $('aging-foot').innerHTML = `<tr style="background:var(--faint)">
+    <td style="font-weight:700;color:var(--gl)">TOTALS</td>
+    ${buckets.map(b=>`<td style="font-family:var(--mono);font-weight:600;color:var(--gl)">${fmt(d.totals[b]||0)}</td>`).join('')}
+    <td style="font-family:var(--mono);font-weight:700;color:var(--gl)">${fmt(d.grand_total)}</td>
+  </tr>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// REPORTS
+// ═══════════════════════════════════════════════════════════════════
+async function loadOutstanding() {
+  const month=$('rep-month').value;
+  const data = await api('/api/reports/outstanding?month='+month);
+  $('outstanding-body').innerHTML = data.map(r=>`<tr>
+    <td><strong>${r.vendor}</strong></td>
+    <td>${typeBadge(r.supplier_type)}</td>
+    <td>${r.category}</td>
+    <td>${r.payment_method}</td>
+    <td style="font-family:var(--mono)">${r.bank_account||r.ecocash_number||'—'}</td>
+    <td>${r.invoice_count}</td>
+    <td style="font-family:var(--mono);color:var(--warn);font-weight:600">${fmt(r.total_outstanding)}</td>
+  </tr>`).join('') || '<tr><td colspan="7" class="empty">No outstanding invoices</td></tr>';
+}
+
+async function loadRejections() {
+  const month=$('rej-month').value;
+  const d = await api('/api/reports/rejections?month='+month);
+  $('rej-content').innerHTML = Object.keys(d.grouped).length ? Object.entries(d.grouped).map(([month,items])=>`
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">${month} — ${items.length} rejection(s)</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Invoice</th><th>Vendor</th><th>Amount</th><th>Rejected By</th><th>Date</th><th>Reason</th></tr></thead>
+        <tbody>${items.map(r=>`<tr>
+          <td style="font-family:var(--mono)">${r.invoice_number}</td>
+          <td>${r.vendor_name}</td>
+          <td style="font-family:var(--mono)">${fmt(r.total_amount)}</td>
+          <td>${r.rejected_by||'—'}</td>
+          <td>${(r.rejected_at||'').slice(0,10)}</td>
+          <td style="color:var(--red)">${r.rejection_reason||'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>`).join('')
+    : '<div class="empty">No rejections found</div>';
+}
+
+async function loadMonthly() {
+  const data = await api('/api/reports/monthly_summary');
+  $('monthly-body').innerHTML = data.map(r=>`<tr>
+    <td style="font-weight:500;color:var(--gl)">${r.invoice_month}</td>
+    <td>${r.total_invoices}</td>
+    <td style="font-family:var(--mono)">${fmt(r.total_amount)}</td>
+    <td style="font-family:var(--mono);color:var(--green)">${fmt(r.paid_amount)}</td>
+    <td style="font-family:var(--mono);color:var(--warn)">${fmt(r.outstanding_amount)}</td>
+    <td style="color:var(--red)">${r.rejected_count}</td>
+  </tr>`).join('') || '<tr><td colspan="6" class="empty">No data</td></tr>';
+}
+
+// ── SOPs ──────────────────────────────────────────────────────────────────────
+async function loadSops(){
+  const [sops, checklist] = await Promise.all([
+    api('/api/sops'),
+    api('/api/sop_checklist')
+  ]);
+
+  // Render period-end checklist
+  const cl = checklist.checklist || [];
+  const done = cl.filter(c=>c.done).length;
+  const total = cl.length;
+  const pct = Math.round(done/total*100);
+  const clHtml = `
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-title">Period-End Compliance Checklist — ${checklist.month}</div>
+      <div class="chart-sub">${done}/${total} steps complete (${pct}%)</div>
+      <div style="height:6px;background:var(--faint);border-radius:3px;margin-bottom:16px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${pct===100?'var(--success)':pct>=60?'var(--warn)':'var(--danger)'};border-radius:3px;transition:width .5s"></div>
+      </div>
+      ${cl.map(c=>`
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--faint)">
+          <span style="font-size:14px;flex-shrink:0">${c.done?'✅':'⬜'}</span>
+          <div>
+            <div style="font-size:12px;font-weight:500;color:${c.done?'var(--success)':'var(--text)'}">${c.name}</div>
+            <div style="font-size:10px;color:var(--muted)">${c.step} · ${c.detail}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  $('sop-checklist').innerHTML = clHtml;
+
+  // Render SOP cards
+  $('sop-list').innerHTML = sops.map(sop=>`
+    <div class="sop-card">
+      <div class="sop-header">
+        <span class="sop-code">${sop.code}</span>
+        <div>
+          <div class="sop-title">${sop.title}</div>
+          <div class="sop-roles">${sop.version} · Roles: ${sop.roles}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px"><strong style="color:var(--accent2)">Objective:</strong> ${sop.objective}</div>
+      ${sop.prohibitions.map(p=>`<div style="font-size:11px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:6px;padding:6px 10px;margin-bottom:6px;color:var(--danger)">⛔ PROHIBITED: ${p}</div>`).join('')}
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:12px 0 8px">Procedure Steps</div>
+      ${sop.steps.map(s=>`
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <div style="background:rgba(201,150,12,.15);color:var(--accent2);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;font-family:var(--mono);flex-shrink:0">Step ${s.step}</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:var(--accent2);margin-bottom:4px">${s.action}</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${s.detail}</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+                ${s.responsible.map(r=>`<span class="badge badge-local" style="font-size:10px">👤 ${r}</span>`).join('')}
+                ${s.status_transition?`<span class="badge badge-approved" style="font-size:10px">→ ${s.status_transition}</span>`:''}
+              </div>
+              <div style="font-size:10px;color:var(--accent);background:rgba(201,150,12,.05);border:1px solid rgba(201,150,12,.12);border-radius:5px;padding:4px 8px;margin-top:4px">💻 System: ${s.system_action}</div>
+            </div>
+          </div>
+        </div>`).join('')}
+      <div style="margin-top:12px">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Key Risks</div>
+        ${sop.key_risks.map(r=>`
+          <div style="display:flex;gap:10px;font-size:11px;padding:6px 0;border-bottom:1px solid var(--faint)">
+            <span class="badge badge-zig" style="flex-shrink:0">${r.ref}</span>
+            <span style="color:var(--muted)">${r.hazard}</span>
+            <span style="color:var(--danger)">→ ${r.risk}</span>
+            <span style="color:var(--success);margin-left:auto">✓ ${r.control}</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+async function loadRolePermissions(){
+  const perms = await api('/api/role_permissions');
+  const entries = Object.entries(perms);
+  $('role-permissions-list').innerHTML = entries.map(([role, actions])=>`
+    <div class="kpi-dash-card" style="flex-direction:column;align-items:flex-start">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="background:rgba(201,150,12,.12);color:var(--accent2);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600">${role}</div>
+        <span style="font-size:11px;color:var(--muted)">${actions.length} authorised action(s) per SOP</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${actions.map(a=>`<span style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:11px;color:var(--muted);font-family:var(--mono)">${a.replace(/_/g,' ')}</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+
+
 </script>
 </body>
 </html>
