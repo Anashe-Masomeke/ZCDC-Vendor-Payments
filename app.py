@@ -14,7 +14,7 @@ from flask import Flask, request, jsonify, send_from_directory, session
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__, static_folder=os.path.join(BASE_DIR, "static"))
 app.secret_key = "zcdc_secret_2024"
-DB_PATH = os.path.join(BASE_DIR, "zcdc_vendor_payments.db")
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zcdc_vendor_payments.db")
 
 # ── Import email service (safe — won't crash if file missing) ─────────────────
 try:
