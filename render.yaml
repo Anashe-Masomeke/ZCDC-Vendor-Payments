@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: zcdc-vendor-system
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    disk:
+      name: zcdc-data
+      mountPath: /opt/render/project/src
+      sizeGB: 1
