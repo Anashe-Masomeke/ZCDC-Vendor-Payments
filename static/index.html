@@ -235,18 +235,19 @@ tr:hover td{background:rgba(200,150,12,.03)}
 
     <!-- LOGIN -->
     <div class="auth-form active" id="af-login">
-      <div class="fld"><label>🏭 Select Portal</label>
-        <select id="l-portal" style="width:100%;background:#111100;border:2px solid var(--gold);border-radius:9px;padding:.75rem .9rem;color:var(--text);font-family:var(--font);font-size:.95rem;font-weight:600;outline:none;transition:border-color .2s">
-          <option value="A">⛏️ Portal A — Chiadzwa</option>
-          <option value="E">🏔️ Portal E — Chimanimani</option>
-        </select>
-      </div>
       <div class="fld"><label>Mine Number</label>
         <input type="text" id="l-user" placeholder="Enter your mine number (e.g. ZC-001)" autocomplete="username" style="text-transform:uppercase"></div>
       <div class="fld"><label>4-Digit PIN</label>
         <input type="password" id="l-pass" placeholder="Enter 4-digit PIN" maxlength="4" inputmode="numeric" pattern="[0-9]{4}"></div>
       <button class="auth-btn" onclick="doLogin()">Sign In →</button>
       <div class="auth-err" id="l-err"></div>
+      <div class="auth-hint">
+        <strong>Demo accounts (Mine Number / PIN):</strong><br>
+        FM_ALICE / admin123 — Finance Manager<br>
+        CFO_JAMES / cfo123 — Chief Finance Officer<br>
+        CLERK_JANE / clerk123 — CM Clerk<br>
+        TREASURY_SUE / treasury123 — Treasury Officer
+      </div>
     </div>
 
     <!-- REGISTER -->
@@ -901,11 +902,10 @@ function authTab(t) {
 
 async function doLogin() {
   const user = $('l-user').value.trim().toUpperCase(), pass = $('l-pass').value.trim();
-  const portal = ($('l-portal')?.value || 'A');
   if(!user||!pass){showErr('l-err','Enter mine number and PIN');return;}
   if(!/^\d{4}$/.test(pass)&&pass.length<3){showErr('l-err','PIN must be 4 digits');return;}
   // Send both mine_number/pin (new) and username/password (legacy fallback)
-  const d = await api('/api/login', {method:'POST', body:JSON.stringify({mine_number:user,pin:pass,username:user,password:pass,portal})});
+  const d = await api('/api/login', {method:'POST', body:JSON.stringify({mine_number:user,pin:pass,username:user,password:pass})});
   if(d.ok) { currentUser=d; enterApp(d); }
   else showErr('l-err', d.error||'Invalid mine number or PIN');
 }
@@ -943,25 +943,6 @@ async function enterApp(u) {
   $('topbar-role').textContent = u.role;
   $('sb-user').textContent = u.role+' · '+u.username;
 
-  // Show portal in sidebar logo area
-  const portalName = u.portal_name || (u.portal==='E' ? 'Portal E — Chimanimani' : 'Portal A — Chiadzwa');
-  const portalColor = u.portal_color || (u.portal==='E' ? '#4A90D9' : '#C8960C');
-  const logoSub = document.querySelector('.logo-sub');
-  if(logoSub) {
-    logoSub.innerHTML = `<span style="color:${portalColor};font-weight:600">${portalName}</span>`;
-  }
-  // Show portal badge in topbar
-  let portalBadge = $('portal-badge');
-  if(!portalBadge) {
-    portalBadge = document.createElement('span');
-    portalBadge.id = 'portal-badge';
-    portalBadge.style.cssText = 'font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:6px;letter-spacing:.04em';
-    $('topbar-role').parentNode.insertBefore(portalBadge, $('topbar-role').nextSibling);
-  }
-  portalBadge.textContent = u.portal==='E' ? '🏔 Chimanimani' : '⛏ Chiadzwa';
-  portalBadge.style.background = u.portal==='E' ? 'rgba(74,144,217,.18)' : 'rgba(200,150,12,.18)';
-  portalBadge.style.color = portalColor;
-
   // Fetch permissions for this role
   const pr = await api('/api/my_permissions');
   currentPerms = pr.permissions || {};
@@ -982,9 +963,6 @@ async function enterApp(u) {
   loadDashboard();
 }
 
-// Report sections are always visible to ALL roles — only invoice process actions are role-gated
-const ALWAYS_VISIBLE_REPORTS = new Set(['risk','projection','working-capital','aging','reports','rejections','monthly','schedule']);
-
 function applyRoleNav(allowed) {
   // Map nav show() targets to permission keys
   const navMap = {
@@ -998,14 +976,14 @@ function applyRoleNav(allowed) {
     'add-invoice': ['invoices'],
     'tax-invoices': ['invoices'],
     'batches': ['batches'],
-    'schedule': true,        // All roles — reports access
-    'risk': true,            // All roles — reports access
-    'projection': true,      // All roles — reports access
-    'working-capital': true, // All roles — reports access
-    'aging': true,           // All roles — reports access
-    'reports': true,         // All roles — reports access
-    'rejections': true,      // All roles — reports access
-    'monthly': true,         // All roles — reports access
+    'schedule': ['batches','schedule'],
+    'risk': ['risk'],
+    'projection': ['cashflow'],
+    'working-capital': ['wc','performance'],
+    'aging': ['aging','outstanding'],
+    'reports': ['outstanding'],
+    'rejections': ['rejections'],
+    'monthly': ['monthly'],
   };
   const allowedSet = new Set(allowed);
   document.querySelectorAll('.nav-item').forEach(n => {
