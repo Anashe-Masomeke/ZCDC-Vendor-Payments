@@ -1,18 +1,5 @@
 flask
 gunicorn
-Anashe Masomeke is inviting you to a scheduled Zoom meeting.
 
-Topic: Anashe Masomeke's Zoom Meeting
-Join Zoom Meeting
-https://us05web.zoom.us/j/84377219960?pwd=dDUC6RQJjgNeDIdH60kK3z0Lbf7P3u.1
-
-Meeting agenda
-https://docs.zoom.us/agenda/doc/f2440797-9d1a-4587-9dc2-52902079cbb5
-
-Meeting chat link
-https://us05web.zoom.us/launch/jc/84377219960
-
-Meeting ID: 843 7721 9960
-Passcode: i7hbPT
 
 
