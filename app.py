@@ -13,7 +13,11 @@ from flask import Flask, request, jsonify, send_from_directory, session
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__, static_folder=os.path.join(BASE_DIR, "static"))
-app.secret_key = "zcdc_secret_2024"
+app.secret_key = "zcdc_stable_secret_key_2025_do_not_change"
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = False
 DB_PATH = os.path.join(BASE_DIR, "zcdc_vendor_payments.db")
 
 # ── Import email service (safe — won't crash if file missing) ─────────────────
@@ -47,7 +51,7 @@ def _email_async(fn, *args, **kwargs):
     """Run email sending in a background thread so it never slows down the API."""
     threading.Thread(target=fn, args=args, kwargs=kwargs, daemon=True).start()
 
-# ── No built-in demo users — all accounts are registered through the system ──
+# ── All accounts are registered through the system — no built-in users ────────
 
 VALID_ROLES = [
     "Chief Finance Officer", "Finance Manager", "Assistant Finance Manager",
@@ -56,89 +60,74 @@ VALID_ROLES = [
 ]
 
 # ── Role permissions (per IMS-FIN-SOP-01 & SOP-02) ───────────────────────────
-# All roles share this full set of report nav items — invoice process actions are still role-gated
-REPORT_NAV_ITEMS = ["outstanding","aging","backlog","rejections","schedule","monthly","risk","cashflow","wc","performance"]
+ALL_REPORTS = ["outstanding","aging","backlog","rejections","schedule","monthly","risk","cashflow","wc","performance"]
 
 ROLE_PERMISSIONS = {
     "Receiving Clerk": {
         "can_add_vendor":False,"can_create_invoice":True,"can_submit":True,
         "can_verify":False,"can_approve":False,"can_reject":False,
         "can_create_batch":False,"can_record_payment":False,
-        "nav_items":["invoices"] + REPORT_NAV_ITEMS,
+        "nav_items":["invoices"],
         "label":"Receives invoices & GRVs. Captures into register. Submits for 3-way match.",
     },
     "Cost and Management Clerk": {
         "can_add_vendor":False,"can_create_invoice":True,"can_submit":True,
         "can_verify":False,"can_approve":False,"can_reject":False,
         "can_create_batch":False,"can_record_payment":False,
-        "nav_items":["invoices","vendors"] + REPORT_NAV_ITEMS,
+        "nav_items":["invoices","vendors"] + ALL_REPORTS,
         "label":"Performs 3-way match (Invoice/PO/GRV). Parks invoices. Requests credit notes.",
     },
     "Assistant Cost and Management Accountant": {
         "can_add_vendor":False,"can_create_invoice":False,"can_submit":False,
         "can_verify":True,"can_approve":False,"can_reject":True,
         "can_create_batch":True,"can_record_payment":False,
-        "nav_items":["invoices","batches"] + REPORT_NAV_ITEMS,
+        "nav_items":["invoices","batches"] + ALL_REPORTS,
         "label":"Reviews parked invoices. Prepares creditor reconciliations. Generates payment run.",
     },
     "Cost and Management Accountant": {
         "can_add_vendor":False,"can_create_invoice":False,"can_submit":False,
         "can_verify":True,"can_approve":False,"can_reject":True,
         "can_create_batch":True,"can_record_payment":False,
-        "nav_items":["invoices","batches","vendors"] + REPORT_NAV_ITEMS,
+        "nav_items":["invoices","batches","vendors"] + ALL_REPORTS,
         "label":"Reviews & posts invoices. Oversees 3-way match. Period-end reconciliations.",
     },
     "Assistant Finance Manager": {
         "can_add_vendor":False,"can_create_invoice":False,"can_submit":False,
         "can_verify":False,"can_approve":False,"can_reject":True,
         "can_create_batch":False,"can_record_payment":False,
-        "nav_items":[] + REPORT_NAV_ITEMS,
+        "nav_items":ALL_REPORTS,
         "label":"Reviews & signs creditor reconciliations. Approves payment vouchers. Reviews reversals.",
     },
     "Treasury Officer": {
         "can_add_vendor":False,"can_create_invoice":False,"can_submit":False,
         "can_verify":False,"can_approve":False,"can_reject":False,
         "can_create_batch":True,"can_record_payment":True,
-        "nav_items":["batches"] + REPORT_NAV_ITEMS,
+        "nav_items":["batches"] + ALL_REPORTS,
         "label":"Creates payment batches. Records payments. Uploads to Paynet. Executes payment runs.",
     },
     "Finance Manager": {
         "can_add_vendor":True,"can_create_invoice":False,"can_submit":False,
         "can_verify":False,"can_approve":True,"can_reject":True,
         "can_create_batch":False,"can_record_payment":False,
-        "nav_items":["invoices","vendors"] + REPORT_NAV_ITEMS,
+        "nav_items":["invoices","vendors"] + ALL_REPORTS,
         "label":"Approves invoices. Reviews & signs off reconciliations. Authorises payments.",
     },
     "Chief Finance Officer": {
         "can_add_vendor":True,"can_create_invoice":False,"can_submit":False,
         "can_verify":False,"can_approve":True,"can_reject":True,
         "can_create_batch":False,"can_record_payment":False,
-        "nav_items":["invoices","vendors"] + REPORT_NAV_ITEMS,
+        "nav_items":["invoices","vendors"] + ALL_REPORTS,
         "label":"Overall compliance authority. Final sign-off on all financial reports and payments.",
     },
-
-    # Portal-level identifiers (used in session, not permissions lookup)
-    "_portals": {
-        "A": {"name": "Portal A — Chiadzwa", "code": "CHIADZWA", "color": "#C8960C"},
-        "E": {"name": "Portal E — Chimanimani", "code": "CHIMANIMANI", "color": "#4A90D9"},
-    }
-}
-
-PORTALS = {
-    "A": {"name": "Portal A — Chiadzwa",    "code": "CHIADZWA",   "color": "#C8960C"},
-    "E": {"name": "Portal E — Chimanimani", "code": "CHIMANIMANI","color": "#4A90D9"},
 }
 
 def get_perm(role):
-    p = ROLE_PERMISSIONS.get(role)
-    if p and isinstance(p, dict) and "can_add_vendor" in p:
-        return p
-    return {
+    return ROLE_PERMISSIONS.get(role, {
         "can_add_vendor":False,"can_create_invoice":False,"can_submit":False,
         "can_verify":False,"can_approve":False,"can_reject":False,
         "can_create_batch":False,"can_record_payment":False,
-        "nav_items": list(REPORT_NAV_ITEMS),"label":"Read-only access.",
-    }
+        "nav_items":["dashboard"],"label":"Read-only access.",
+    })
 
 def check_perm(perm_key):
     role = session.get("role","")
@@ -242,6 +231,20 @@ def init_db():
             detail   TEXT,
             sent_at  TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS invoice_activity (
+            activity_id  TEXT PRIMARY KEY,
+            invoice_id   TEXT NOT NULL,
+            invoice_number TEXT NOT NULL,
+            vendor_name  TEXT NOT NULL,
+            action       TEXT NOT NULL,
+            from_status  TEXT,
+            to_status    TEXT,
+            performed_by TEXT NOT NULL,
+            notes        TEXT DEFAULT '',
+            amount       REAL DEFAULT 0,
+            currency     TEXT DEFAULT 'USD',
+            activity_at  TEXT DEFAULT (datetime('now'))
+        );
         """)
         # Add email column to existing tables if upgrading from older version
         for tbl, col, dflt in [
@@ -253,11 +256,6 @@ def init_db():
                 conn.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} TEXT DEFAULT {dflt}")
             except Exception:
                 pass
-        # Add portal column to users table if upgrading from older version
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN portal TEXT DEFAULT 'A'")
-        except Exception:
-            pass
 
 new_id   = lambda: str(uuid.uuid4())
 rows_to_list = lambda rows: [dict(r) for r in rows]
@@ -267,6 +265,14 @@ def log_action(conn, invoice_id, action, from_status, to_status, performed_by, n
         "INSERT INTO workflow_log (log_id,invoice_id,action,from_status,to_status,performed_by,notes) VALUES (?,?,?,?,?,?,?)",
         (new_id(), invoice_id, action, from_status, to_status, performed_by, notes)
     )
+
+def log_activity(invoice_id, invoice_number, vendor_name, action, from_status, to_status, performed_by, notes="", amount=0, currency="USD"):
+    """Write a record to invoice_activity so the live feed can show it."""
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO invoice_activity (activity_id,invoice_id,invoice_number,vendor_name,action,from_status,to_status,performed_by,notes,amount,currency) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            (new_id(), invoice_id, invoice_number, vendor_name, action, from_status, to_status, performed_by, notes, amount, currency)
+        )
 
 def age_bucket(d):
     if not d: return "Unknown"
@@ -344,25 +350,11 @@ def login():
     mine_number = (d.get("mine_number") or d.get("username") or "").strip().upper()
     pin         = (d.get("pin") or d.get("password") or "").strip()
     u = lookup_user(mine_number)
-    portal = (d.get("portal") or "A").strip().upper()
-    if portal not in PORTALS:
-        portal = "A"
     if u and u["password"] == pin:
         session["username"] = mine_number
         session["role"]     = u["role"]
         session["initials"] = u["initials"]
-        session["portal"]   = portal
-        portal_info = PORTALS[portal]
-        return jsonify({
-            "ok": True,
-            "username": mine_number,
-            "role": u["role"],
-            "initials": u["initials"],
-            "portal": portal,
-            "portal_name": portal_info["name"],
-            "portal_code": portal_info["code"],
-            "portal_color": portal_info["color"],
-        })
+        return jsonify({"ok": True, "username": mine_number, "role": u["role"], "initials": u["initials"]})
     return jsonify({"error": "Invalid mine number or PIN"}), 401
 
 @app.route("/api/logout", methods=["POST"])
@@ -373,41 +365,18 @@ def logout():
 @app.route("/api/me")
 def me():
     if "username" in session:
-        portal = session.get("portal", "A")
-        portal_info = PORTALS.get(portal, PORTALS["A"])
-        return jsonify({
-            "username": session["username"],
-            "role": session["role"],
-            "initials": session["initials"],
-            "portal": portal,
-            "portal_name": portal_info["name"],
-            "portal_code": portal_info["code"],
-            "portal_color": portal_info["color"],
-        })
+        return jsonify({"username": session["username"], "role": session["role"], "initials": session["initials"]})
     return jsonify({"error": "Not logged in"}), 401
 
 @app.route("/api/roles")
 def get_roles():
     return jsonify(VALID_ROLES)
 
-@app.route("/api/portals")
-def get_portals():
-    return jsonify(PORTALS)
-
 @app.route("/api/my_permissions")
 def my_permissions():
-    role   = session.get("role","")
-    portal = session.get("portal","A")
-    perms  = get_perm(role)
-    portal_info = PORTALS.get(portal, PORTALS["A"])
-    return jsonify({
-        "role": role,
-        "permissions": perms,
-        "portal": portal,
-        "portal_name": portal_info["name"],
-        "portal_code": portal_info["code"],
-        "portal_color": portal_info["color"],
-    })
+    role  = session.get("role","")
+    perms = get_perm(role)
+    return jsonify({"role": role, "permissions": perms})
 
 # ══════════════════════════════════════════════════════════════════════════════
 # VENDORS
@@ -523,6 +492,10 @@ def add_invoice():
                  d["created_by"], imonth)
             )
             log_action(conn, iid, "Created", None, "Draft", d["created_by"])
+        # Log to activity feed
+        vname = conn.execute("SELECT name FROM vendors WHERE vendor_id=?", (d["vendor_id"],)).fetchone()
+        vname = vname["name"] if vname else "Unknown Vendor"
+        log_activity(iid, d["invoice_number"], vname, "Created", None, "Draft", d["created_by"], "", float(d["total_amount"]), d.get("currency","USD"))
         return jsonify({"ok":True,"invoice_id":iid}), 201
     except sqlite3.IntegrityError as e:
         return jsonify({"error":str(e)}), 400
@@ -568,8 +541,7 @@ def workflow(iid):
 
     with get_conn() as conn:
         inv = conn.execute(
-            """SELECT i.*, v.name AS vendor_name, v.email AS vendor_email,
-                      v.cost_centre_name
+            """SELECT i.*, v.name AS vendor_name, v.email AS vendor_email
                FROM invoices i JOIN vendors v ON i.vendor_id=v.vendor_id
                WHERE i.invoice_id=?""", (iid,)
         ).fetchone()
@@ -598,23 +570,33 @@ def workflow(iid):
     if action == "submit":
         _email_async(Emails.invoice_submitted,
                      inv_num, v_name, amount, inv_date, desc, performed_by, cc)
-
     elif action == "verify":
         _email_async(Emails.invoice_verified,
                      inv_num, v_name, amount, performed_by, cc)
-
     elif action == "approve":
         _email_async(Emails.invoice_approved,
                      v_email, v_name, inv_num, amount, performed_by)
-
     elif action == "reject":
         _email_async(Emails.invoice_rejected,
                      v_email, v_name, inv_num, amount, notes, performed_by)
 
+    # ── Write to live activity feed ───────────────────────────────────────────
+    action_labels = {
+        "submit":  "submitted for review",
+        "verify":  "verified (3-way match passed)",
+        "approve": "approved for payment",
+        "reject":  "rejected",
+    }
+    log_activity(
+        iid, inv_num, v_name,
+        action_labels.get(action, action.capitalize()),
+        inv["status"], to_status,
+        performed_by,
+        notes or "",
+        float(amount),
+        inv.get("currency","USD")
+    )
     return jsonify({"ok":True,"new_status":to_status})
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PAYMENT BATCHES
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.route("/api/batches", methods=["GET"])
@@ -758,7 +740,15 @@ def record_payment():
         amount, d["payment_date"], d.get("payment_method","Bank"),
         d.get("bank_reference",""), recorded_by
     )
-
+    # Live activity feed
+    log_activity(
+        iid, inv["invoice_number"], inv["vendor_name"],
+        "Payment recorded — " + new_status,
+        inv["status"], new_status,
+        recorded_by,
+        "Amount: " + str(amount) + " | Method: " + d.get("payment_method","Bank") + " | Ref: " + d.get("bank_reference",""),
+        amount, "USD"
+    )
     return jsonify({"ok":True, "new_status":new_status, "outstanding":new_out})
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1299,7 +1289,6 @@ def index():
 
 # ── INIT DB ───────────────────────────────────────────────────────────────────
 init_db()
-
 
 
 # ── NEW TABLES (added to init_db via ALTER TABLE) ─────────────────────────────
@@ -1982,6 +1971,22 @@ def report_rejections():
     })
 
 
+@app.route("/api/invoice_activity")
+def get_invoice_activity():
+    """Live feed of every invoice action — used by the Invoice Notifications tab."""
+    limit  = int(request.args.get("limit", 100))
+    action = request.args.get("action", "")
+    user   = request.args.get("user", "")
+    sql    = "SELECT * FROM invoice_activity WHERE 1=1"
+    params = []
+    if action: sql += " AND action LIKE ?"; params.append("%" + action + "%")
+    if user:   sql += " AND performed_by=?"; params.append(user)
+    sql += " ORDER BY activity_at DESC LIMIT ?"
+    params.append(limit)
+    with get_conn() as conn:
+        rows = conn.execute(sql, params).fetchall()
+    return jsonify(rows_to_list(rows))
+
 @app.route("/api/reports/schedule")
 def report_schedule():
     """Payment schedule — all items in payment batches with vendor bank details."""
@@ -2002,7 +2007,5 @@ def report_schedule():
     return jsonify(rows_to_list(rows))
 
 if __name__ == "__main__":
-    app.config["SESSION_PERMANENT"] = False
-    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     init_db()
     app.run(debug=True, port=5000)
