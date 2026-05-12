@@ -235,6 +235,12 @@ tr:hover td{background:rgba(200,150,12,.03)}
 
     <!-- LOGIN -->
     <div class="auth-form active" id="af-login">
+      <div class="fld"><label>🏭 Select Portal</label>
+        <select id="l-portal" style="width:100%;background:#111100;border:2px solid var(--gold);border-radius:9px;padding:.75rem .9rem;color:var(--text);font-family:var(--font);font-size:.95rem;font-weight:600;outline:none;transition:border-color .2s">
+          <option value="A">⛏️ Portal A — Chiadzwa</option>
+          <option value="E">🏔️ Portal E — Chimanimani</option>
+        </select>
+      </div>
       <div class="fld"><label>Mine Number</label>
         <input type="text" id="l-user" placeholder="Enter your mine number (e.g. ZC-001)" autocomplete="username" style="text-transform:uppercase"></div>
       <div class="fld"><label>4-Digit PIN</label>
@@ -311,8 +317,7 @@ tr:hover td{background:rgba(200,150,12,.03)}
       <div class="nav-item" onclick="show('reports')"><span class="nav-icon">📋</span> Outstanding Report</div>
       <div class="nav-item" onclick="show('rejections')"><span class="nav-icon">❌</span> Rejections</div>
       <div class="nav-item" onclick="show('monthly')"><span class="nav-icon">📆</span> Monthly Summary</div>
-      <div class="nav-item" onclick="show('inv-activity')"><span class="nav-icon">🔔</span> Invoice Notifications <span class="nav-badge" id="activity-badge" style="display:none">0</span></div>
-      <div class="nav-item" onclick="show('notifications')"><span class="nav-icon">📧</span> Send Notifications</div>
+      <div class="nav-item" onclick="show('notifications')"><span class="nav-icon">🔔</span> Notifications</div>
     </nav>
     <div class="aside-footer">
       <div id="sb-user" style="font-size:10px;color:var(--muted);margin-bottom:6px;padding:0 4px"></div>
@@ -712,34 +717,7 @@ tr:hover td{background:rgba(200,150,12,.03)}
   </table></div>
 </div>
 
-<!-- ══ INVOICE NOTIFICATIONS / LIVE ACTIVITY FEED ══ -->
-<div class="section" id="s-inv-activity">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-    <div>
-      <div style="font-size:15px;font-weight:600;color:var(--gl)">🔔 Invoice Activity Feed</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">Every action on every invoice — who did what and when</div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <select class="filter-select" id="act-filter-action" onchange="loadActivity()">
-        <option value="">All Actions</option>
-        <option value="Created">Created</option>
-        <option value="submitted">Submitted</option>
-        <option value="verified">Verified</option>
-        <option value="approved">Approved</option>
-        <option value="rejected">Rejected</option>
-        <option value="Payment">Payment</option>
-        <option value="Scheduled">Scheduled</option>
-      </select>
-      <select class="filter-select" id="act-filter-user" onchange="loadActivity()">
-        <option value="">All Users</option>
-      </select>
-      <button class="btn btn-out btn-sm" onclick="loadActivity()">↻ Refresh</button>
-    </div>
-  </div>
-  <div id="act-feed"></div>
-</div>
-
-<!-- ══ NOTIFICATIONS (email send) ══ -->
+<!-- ══ NOTIFICATIONS ══ -->
 <div class="section" id="s-notifications">
   <!-- Email status banner -->
   <div id="email-status-banner" style="margin-bottom:14px;padding:10px 16px;border-radius:8px;font-size:12px;display:none"></div>
@@ -891,8 +869,7 @@ function show(sec) {
     'batches':'Payment Batches','schedule':'Payment Schedule',
     'risk':'Risk Scorecard','projection':'Cash Projection','working-capital':'Working Capital',
     'aging':'Aging Report','reports':'Outstanding Report','rejections':'Rejections Report',
-    'monthly':'Monthly Summary','notifications':'Send Notifications',
-    'inv-activity':'Invoice Notifications',
+    'monthly':'Monthly Summary','notifications':'Notifications',
     'sops':'SOPs — IMS-FIN-SOP-01 & IMS-FIN-SOP-02'
   };
   $('pg-title').textContent = titles[sec] || sec;
@@ -905,15 +882,6 @@ function show(sec) {
     'risk':loadRisk, 'projection':loadProjection, 'working-capital':loadWorkingCapital,
     'aging':loadAging, 'reports':loadOutstanding, 'rejections':loadRejections,
     'monthly':loadMonthly, 'notifications':loadNotifLog,
-    'inv-activity': function() {
-      loadActivity(false).then(function() {
-        // Mark all visible as read and clear badge
-        if(window._lastActivityData) {
-          markAllSeen(window._lastActivityData);
-          updateBadge(window._lastActivityData);
-        }
-      });
-    },
     'sops':loadSops
   };
   if(loaders[sec]) loaders[sec]();
@@ -933,10 +901,11 @@ function authTab(t) {
 
 async function doLogin() {
   const user = $('l-user').value.trim().toUpperCase(), pass = $('l-pass').value.trim();
+  const portal = ($('l-portal')?.value || 'A');
   if(!user||!pass){showErr('l-err','Enter mine number and PIN');return;}
   if(!/^\d{4}$/.test(pass)&&pass.length<3){showErr('l-err','PIN must be 4 digits');return;}
   // Send both mine_number/pin (new) and username/password (legacy fallback)
-  const d = await api('/api/login', {method:'POST', body:JSON.stringify({mine_number:user,pin:pass,username:user,password:pass})});
+  const d = await api('/api/login', {method:'POST', body:JSON.stringify({mine_number:user,pin:pass,username:user,password:pass,portal})});
   if(d.ok) { currentUser=d; enterApp(d); }
   else showErr('l-err', d.error||'Invalid mine number or PIN');
 }
@@ -974,8 +943,27 @@ async function enterApp(u) {
   $('topbar-role').textContent = u.role;
   $('sb-user').textContent = u.role+' · '+u.username;
 
-  // Fetch permissions for this role — pass role as query param fallback in case session is lost
-  const pr = await api('/api/my_permissions?role=' + encodeURIComponent(u.role || ''));
+  // Show portal in sidebar logo area
+  const portalName = u.portal_name || (u.portal==='E' ? 'Portal E — Chimanimani' : 'Portal A — Chiadzwa');
+  const portalColor = u.portal_color || (u.portal==='E' ? '#4A90D9' : '#C8960C');
+  const logoSub = document.querySelector('.logo-sub');
+  if(logoSub) {
+    logoSub.innerHTML = `<span style="color:${portalColor};font-weight:600">${portalName}</span>`;
+  }
+  // Show portal badge in topbar
+  let portalBadge = $('portal-badge');
+  if(!portalBadge) {
+    portalBadge = document.createElement('span');
+    portalBadge.id = 'portal-badge';
+    portalBadge.style.cssText = 'font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:6px;letter-spacing:.04em';
+    $('topbar-role').parentNode.insertBefore(portalBadge, $('topbar-role').nextSibling);
+  }
+  portalBadge.textContent = u.portal==='E' ? '🏔 Chimanimani' : '⛏ Chiadzwa';
+  portalBadge.style.background = u.portal==='E' ? 'rgba(74,144,217,.18)' : 'rgba(200,150,12,.18)';
+  portalBadge.style.color = portalColor;
+
+  // Fetch permissions for this role
+  const pr = await api('/api/my_permissions');
   currentPerms = pr.permissions || {};
 
   // Show role banner
@@ -991,35 +979,49 @@ async function enterApp(u) {
   applyRoleButtons(currentPerms);
 
   populateMonthFilters();
-  startActivityPoll();
   loadDashboard();
 }
 
+// Report sections are always visible to ALL roles — only invoice process actions are role-gated
+const ALWAYS_VISIBLE_REPORTS = new Set(['risk','projection','working-capital','aging','reports','rejections','monthly','schedule']);
+
 function applyRoleNav(allowed) {
-  const allowedSet = new Set(allowed);
-  // Report/analytics nav items that are ALWAYS visible to every role
-  const alwaysShow = new Set(['dashboard','kpis','ranking','notifications','inv-activity',
-    'risk','projection','working-capital','aging','reports','rejections','monthly','schedule']);
-  // Invoice process items that are role-gated
+  // Map nav show() targets to permission keys
   const navMap = {
-    'vendors':      ['vendors','outstanding','aging','backlog','rejections','schedule','monthly','risk','cashflow','wc','performance'],
-    'add-vendor':   ['vendors'],
-    'invoices':     ['invoices'],
-    'add-invoice':  ['invoices'],
+    'dashboard': true,
+    'kpis': true,
+    'ranking': true,
+    'notifications': true,
+    'vendors': ['vendors','outstanding','aging','backlog','rejections','schedule','monthly','risk','cashflow','wc','performance','kpidash','sops'],
+    'add-vendor': ['vendors'],
+    'invoices': ['invoices'],
+    'add-invoice': ['invoices'],
     'tax-invoices': ['invoices'],
-    'batches':      ['batches'],
+    'batches': ['batches'],
+    'schedule': true,        // All roles — reports access
+    'risk': true,            // All roles — reports access
+    'projection': true,      // All roles — reports access
+    'working-capital': true, // All roles — reports access
+    'aging': true,           // All roles — reports access
+    'reports': true,         // All roles — reports access
+    'rejections': true,      // All roles — reports access
+    'monthly': true,         // All roles — reports access
   };
-  document.querySelectorAll('.nav-item').forEach(function(n) {
+  const allowedSet = new Set(allowed);
+  document.querySelectorAll('.nav-item').forEach(n => {
     const oc = n.getAttribute('onclick') || '';
     const m = oc.match(/show\('([^']+)'\)/);
     if(!m) return;
     const target = m[1];
-    if(alwaysShow.has(target)) { n.style.display = ''; return; }
     const req = navMap[target];
-    if(!req) { n.style.display = ''; return; }
-    n.style.display = req.some(function(r){ return allowedSet.has(r); }) ? '' : 'none';
+    if(req === true) { n.style.display = ''; return; }
+    if(!req) { n.style.display = 'none'; return; }
+    // req is array of allowed nav_item keys — show if any match
+    const show = req.some(r => allowedSet.has(r));
+    n.style.display = show ? '' : 'none';
   });
-  document.querySelectorAll('.nav-sec').forEach(function(sec) {
+  // Also hide nav-sec headers if all their children are hidden
+  document.querySelectorAll('.nav-sec').forEach(sec => {
     let sib = sec.nextElementSibling;
     let hasVisible = false;
     while(sib && !sib.classList.contains('nav-sec')) {
@@ -1393,209 +1395,6 @@ async function sendNotifPage() {
     if(resultEl){ resultEl.textContent = '❌ ' + err; resultEl.style.color = 'var(--red)'; }
   }
 }
-// ═══════════════════════════════════════════════════════════════════
-// INVOICE ACTIVITY FEED — with per-user read tracking
-// ═══════════════════════════════════════════════════════════════════
-let _activityPoll  = null;
-let _lastActivityId = null;
-
-// Per-user seen IDs stored in memory (keyed by username)
-// Structure: { "ZC123": Set(["id1","id2",...]) }
-const _seenIds = {};
-
-function getSeenKey() {
-  return 'zcdc_seen_' + (currentUser ? currentUser.username : 'guest');
-}
-function getSeenSet() {
-  const key = getSeenKey();
-  if(!_seenIds[key]) {
-    // Load from sessionStorage so it persists within a browser tab session
-    try {
-      const saved = sessionStorage.getItem(key);
-      _seenIds[key] = saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch(e) {
-      _seenIds[key] = new Set();
-    }
-  }
-  return _seenIds[key];
-}
-function markSeen(activityId) {
-  const s = getSeenSet();
-  s.add(activityId);
-  try { sessionStorage.setItem(getSeenKey(), JSON.stringify([...s])); } catch(e){}
-}
-function markAllSeen(data) {
-  const s = getSeenSet();
-  data.forEach(function(a){ s.add(a.activity_id); });
-  try { sessionStorage.setItem(getSeenKey(), JSON.stringify([...s])); } catch(e){}
-}
-function countUnread(data) {
-  const s = getSeenSet();
-  return data.filter(function(a){ return !s.has(a.activity_id); }).length;
-}
-
-const ACTION_ICONS = {
-  'Created':                           {icon:'✏️',  color:'#4A90D9'},
-  'submitted for review':              {icon:'📤',  color:'#f59e0b'},
-  'verified (3-way match passed)':     {icon:'✅',  color:'#22c55e'},
-  'approved for payment':              {icon:'💚',  color:'#3DCC78'},
-  'rejected':                          {icon:'❌',  color:'#e05050'},
-  'Payment recorded — Paid':           {icon:'💰',  color:'#3DCC78'},
-  'Payment recorded — Partially Paid': {icon:'💸',  color:'#fb923c'},
-  'Scheduled':                         {icon:'📅',  color:'#c084fc'},
-};
-function actIcon(action) {
-  if(ACTION_ICONS[action]) return ACTION_ICONS[action];
-  if(action.toLowerCase().includes('payment')) return {icon:'💳', color:'#c084fc'};
-  if(action.toLowerCase().includes('reject'))  return {icon:'❌', color:'#e05050'};
-  if(action.toLowerCase().includes('approve')) return {icon:'💚', color:'#3DCC78'};
-  if(action.toLowerCase().includes('verify'))  return {icon:'✅', color:'#22c55e'};
-  if(action.toLowerCase().includes('submit'))  return {icon:'📤', color:'#f59e0b'};
-  return {icon:'🔔', color:'#C8960C'};
-}
-
-function timeAgo(dtStr) {
-  if(!dtStr) return '';
-  const dt   = new Date(dtStr.replace(' ','T')+'Z');
-  const diff = Math.floor((Date.now() - dt.getTime()) / 1000);
-  if(diff < 60)    return diff + 's ago';
-  if(diff < 3600)  return Math.floor(diff/60) + 'm ago';
-  if(diff < 86400) return Math.floor(diff/3600) + 'h ago';
-  return Math.floor(diff/86400) + 'd ago';
-}
-
-function updateBadge(data) {
-  const badge   = $('activity-badge');
-  if(!badge) return;
-  const unread  = countUnread(data);
-  if(unread > 0) {
-    badge.style.display  = '';
-    badge.textContent    = unread;
-    badge.style.background = 'rgba(224,80,80,.25)';
-    badge.style.color      = '#ff8080';
-  } else {
-    badge.style.display = 'none';
-  }
-}
-
-// Called when user clicks a single notification row — marks it read
-function markOneRead(activityId, rowEl) {
-  markSeen(activityId);
-  // Remove unread highlight
-  if(rowEl) {
-    rowEl.style.borderLeft = '3px solid transparent';
-    rowEl.querySelector('.unread-dot') && (rowEl.querySelector('.unread-dot').style.display = 'none');
-  }
-  // Recount and update badge using cached data
-  if(window._lastActivityData) updateBadge(window._lastActivityData);
-}
-
-async function loadActivity(silent) {
-  const actionF = $('act-filter-action') ? $('act-filter-action').value : '';
-  const userF   = $('act-filter-user')   ? $('act-filter-user').value   : '';
-  const data    = await api('/api/invoice_activity?limit=100&action='+encodeURIComponent(actionF)+'&user='+encodeURIComponent(userF));
-  if(!Array.isArray(data)) return;
-
-  // Cache for badge recalculation
-  window._lastActivityData = data;
-
-  // Populate user filter dropdown once
-  const userSel = $('act-filter-user');
-  if(userSel && userSel.options.length <= 1) {
-    const users = [...new Set(data.map(function(d){ return d.performed_by; }).filter(Boolean))];
-    users.forEach(function(u) {
-      const o = document.createElement('option');
-      o.value = u; o.textContent = u;
-      userSel.appendChild(o);
-    });
-  }
-
-  // Detect brand-new items and toast
-  const newestId = data.length ? data[0].activity_id : null;
-  if(newestId && newestId !== _lastActivityId && _lastActivityId !== null) {
-    const unreadNew = countUnread(data);
-    if(unreadNew > 0) {
-      toast('🔔 ' + data[0].performed_by + ' ' + data[0].action + ' — ' + data[0].invoice_number, 'info');
-    }
-  }
-  _lastActivityId = newestId;
-
-  // Update badge
-  updateBadge(data);
-
-  // If the tab is open and not silently polling, mark ALL currently visible as read
-  const tabOpen = !!document.querySelector('#s-inv-activity.active');
-  if(tabOpen && !silent) {
-    markAllSeen(data);
-    updateBadge(data); // will now show 0 → hide badge
-  }
-
-  const feed = $('act-feed');
-  if(!feed) return;
-  if(!data.length) {
-    feed.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">No invoice activity yet — actions will appear here as invoices are processed.</div>';
-    return;
-  }
-
-  const seen = getSeenSet();
-  feed.innerHTML = data.map(function(a) {
-    const ai       = actIcon(a.action);
-    const isUnread = !seen.has(a.activity_id);
-    const rowBg    = isUnread ? 'rgba(200,150,12,.07)' : '';
-    const leftBdr  = isUnread ? '3px solid var(--gold)' : '3px solid transparent';
-    const dot      = isUnread
-      ? '<span class="unread-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:4px"></span>'
-      : '<span class="unread-dot" style="display:inline-block;width:8px;height:8px;flex-shrink:0"></span>';
-
-    const statusFlow = (a.from_status && a.to_status)
-      ? '<span style="color:var(--muted)">'+a.from_status+'</span> → <span style="color:'+ai.color+'">'+a.to_status+'</span>'
-      : (a.to_status ? '<span style="color:'+ai.color+'">'+a.to_status+'</span>' : '');
-
-    const curr   = a.currency || 'USD';
-    const amtStr = a.amount > 0
-      ? (curr === 'ZiG'
-          ? '<span style="color:#c084fc;font-family:var(--mono);font-size:12px">ZiG '+Number(a.amount).toLocaleString('en',{minimumFractionDigits:2})+'</span>'
-          : '<span style="color:var(--gl);font-family:var(--mono);font-size:12px">$'+Number(a.amount).toLocaleString('en',{minimumFractionDigits:2})+'</span>')
-      : '';
-
-    return '<div data-aid="'+a.activity_id+'" onclick="markOneRead(\''+a.activity_id+'\',this)"'
-      + ' style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;'
-      + 'border-bottom:1px solid var(--faint);border-left:'+leftBdr+';background:'+rowBg+';'
-      + 'cursor:pointer;transition:background .15s,border-left .2s"'
-      + ' onmouseover="this.style.background=\'rgba(200,150,12,.1)\'"'
-      + ' onmouseout="this.style.background=\''+(isUnread?'rgba(200,150,12,.07)':'')+'\'">'+dot
-      + '<div style="width:36px;height:36px;border-radius:50%;background:'+ai.color+'22;border:1.5px solid '+ai.color+'44;'
-      + 'display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">'+ai.icon+'</div>'
-      + '<div style="flex:1;min-width:0">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">'
-      + '<span style="font-weight:600;color:var(--text);font-size:13px">'+a.performed_by+'</span>'
-      + '<span style="font-size:12px;color:'+ai.color+'">'+a.action+'</span>'
-      + amtStr
-      + (isUnread ? '<span style="font-size:9px;font-weight:700;background:rgba(200,150,12,.2);color:var(--gold);border-radius:4px;padding:1px 5px;letter-spacing:.04em">NEW</span>' : '')
-      + '</div>'
-      + '<div style="font-size:12px;color:var(--muted);margin-bottom:2px">'
-      + '<span style="color:var(--gl);font-family:var(--mono)">'+a.invoice_number+'</span>'
-      + ' · '+a.vendor_name
-      + (statusFlow ? ' · '+statusFlow : '')
-      + '</div>'
-      + (a.notes ? '<div style="font-size:11px;color:var(--muted);font-style:italic;margin-top:2px">'+a.notes+'</div>' : '')
-      + '</div>'
-      + '<div style="font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;text-align:right">'
-      + timeAgo(a.activity_at)
-      + '<br><span style="font-size:9px">'+a.activity_at.slice(0,16)+'</span>'
-      + '</div></div>';
-  }).join('');
-}
-
-// Auto-poll every 20 seconds
-function startActivityPoll() {
-  if(_activityPoll) return;
-  _activityPoll = setInterval(function() {
-    const tabOpen = !!document.querySelector('#s-inv-activity.active');
-    loadActivity(!tabOpen); // silent=true when tab is NOT open
-  }, 20000);
-}
-
 async function loadNotifLog() {
   const rows = await api('/api/notifications/log');
   const tbody = $('notif-log-full');
@@ -1699,54 +1498,39 @@ async function addInvoice() {
 
 async function openInvoice(id) {
   const inv = await api('/api/invoices/'+id);
-  if(!inv || inv.error){ toast('Could not load invoice','error'); return; }
-
-  const wf = {'Draft':'submit','Submitted':'verify','Verified':'approve'};
-  const nextAction = wf[inv.status] || null;
-
-  const permLookup = {submit:'can_submit', verify:'can_verify', approve:'can_approve'};
-  const permKey = nextAction ? permLookup[nextAction] : null;
-  const canAct  = !!(permKey && currentPerms[permKey]);
-  const canRej  = !!(['Submitted','Verified'].indexOf(inv.status) >= 0 && currentPerms.can_reject);
-
-  let btnHtml = '';
-  if(canAct) {
-    const label = nextAction.charAt(0).toUpperCase() + nextAction.slice(1);
-    btnHtml += '<button class="btn btn-gold btn-sm" onclick="wfAction(\''+id+'\',\''+nextAction+'\')">✓ '+label+'</button> ';
-  }
-  if(canRej) {
-    btnHtml += '<button class="btn btn-red btn-sm" onclick="wfReject(\''+id+'\')">✕ Reject</button>';
-  }
-  if(!canAct && !canRej) {
-    btnHtml = '<span style="font-size:.78rem;color:var(--muted);font-style:italic">No actions available for your role on this invoice.</span>';
-  }
-
-  const rejHtml = inv.rejection_reason
-    ? '<div style="background:rgba(224,80,80,.08);border:1px solid rgba(224,80,80,.2);border-radius:8px;padding:8px 12px;font-size:.8rem;color:var(--red);margin-bottom:12px">Rejection reason: '+inv.rejection_reason+'</div>'
-    : '';
-
-  const auditHtml = (inv.audit||[]).map(function(a){
-    return '<div style="font-size:.75rem;padding:3px 0;border-bottom:1px solid var(--faint)"><span style="color:var(--gl)">'+a.action+'</span> · '+a.performed_by+' · '+(a.performed_at||'').slice(0,16)+(a.notes?' · <em>'+a.notes+'</em>':'')+'</div>';
-  }).join('');
-
-  $('modal-inv-title').textContent = 'Invoice: ' + inv.invoice_number;
-  $('modal-inv-body').innerHTML =
-    '<div class="form-row" style="margin-bottom:12px">'
-    + '<div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Vendor</div>'
-    + '<div style="font-weight:600">'+inv.vendor_name+'</div></div>'
-    + '<div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Status</div>'
-    + statusBadge(inv.status)+'</div></div>'
-    + '<div class="form-row" style="margin-bottom:12px">'
-    + '<div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Total</div>'
-    + '<div style="font-family:var(--mono);color:var(--gl)">'+fmt(inv.total_amount)+'</div></div>'
-    + '<div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Outstanding</div>'
-    + '<div style="font-family:var(--mono);color:var(--warn)">'+fmt(inv.outstanding_amount)+'</div></div></div>'
-    + '<div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">'+(inv.description||'')+'</div>'
-    + rejHtml
-    + '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:14px">'+btnHtml+'</div>'
-    + '<div style="font-size:.78rem;color:var(--muted);margin-top:8px"><strong>Audit Trail:</strong></div>'
-    + auditHtml;
-
+  const wf = {
+    'Draft':'submit','Submitted':'verify','Verified':'approve'
+  };
+  const nextAction = wf[inv.status];
+  $('modal-inv-title').textContent = `Invoice: ${inv.invoice_number}`;
+  $('modal-inv-body').innerHTML = `
+    <div class="form-row" style="margin-bottom:12px">
+      <div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Vendor</div>
+        <div style="font-weight:600">${inv.vendor_name}</div></div>
+      <div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Status</div>
+        ${statusBadge(inv.status)}</div>
+    </div>
+    <div class="form-row" style="margin-bottom:12px">
+      <div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Total</div>
+        <div style="font-family:var(--mono);color:var(--gl)">${fmt(inv.total_amount)}</div></div>
+      <div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px">Outstanding</div>
+        <div style="font-family:var(--mono);color:var(--warn)">${fmt(inv.outstanding_amount)}</div></div>
+    </div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">${inv.description}</div>
+    ${inv.rejection_reason?`<div style="background:rgba(224,80,80,.08);border:1px solid rgba(224,80,80,.2);border-radius:8px;padding:8px 12px;font-size:.8rem;color:var(--red);margin-bottom:12px">Rejection reason: ${inv.rejection_reason}</div>`:''}
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:14px">
+      ${nextAction && currentPerms[{submit:'can_submit',verify:'can_verify',approve:'can_approve'}[nextAction]]
+        ? `<button class="btn btn-gold btn-sm" onclick="wfAction('${id}','${nextAction}')">✓ ${nextAction.charAt(0).toUpperCase()+nextAction.slice(1)}</button>` : ''}
+      ${['Submitted','Verified'].includes(inv.status) && currentPerms.can_reject
+        ? `<button class="btn btn-red btn-sm" onclick="wfReject('${id}')">✕ Reject</button>` : ''}
+      ${!nextAction && !['Submitted','Verified'].includes(inv.status)
+        ? `<span style="font-size:.78rem;color:var(--muted);font-style:italic">No actions available for your role on this invoice.</span>` : ''}
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);margin-top:8px"><strong>Audit Trail:</strong></div>
+    ${inv.audit.map(a=>`<div style="font-size:.75rem;padding:3px 0;border-bottom:1px solid var(--faint)">
+      <span style="color:var(--gl)">${a.action}</span> · ${a.performed_by} · ${(a.performed_at||'').slice(0,16)}
+      ${a.notes?`· <em>${a.notes}</em>`:''}
+    </div>`).join('')}`;
   $('modal-inv').classList.add('open');
 }
 
@@ -1754,11 +1538,7 @@ async function wfAction(id, action) {
   const permMap = {submit:'can_submit', verify:'can_verify', approve:'can_approve'};
   if(!canDo(permMap[action]||'can_submit')) return;
   const d = await api(`/api/invoices/${id}/workflow`,{method:'POST',
-    body:JSON.stringify({
-      action,
-      performed_by: currentUser?.username || 'user',
-      role: currentUser?.role || ''   // sent as fallback if session lost on server
-    })});
+    body:JSON.stringify({action, performed_by:currentUser?.username||'user'})});
   if(d.ok){toast(`Invoice ${d.new_status}!`,'success');closeModal('modal-inv');loadInvoices();}
   else toast(d.error||'Error','error');
 }
@@ -1768,12 +1548,7 @@ async function wfReject(id) {
   const reason = prompt('Rejection reason (required per IMS-FIN-SOP-01):');
   if(!reason) return;
   const d = await api(`/api/invoices/${id}/workflow`,{method:'POST',
-    body:JSON.stringify({
-      action:'reject',
-      notes: reason,
-      performed_by: currentUser?.username || 'user',
-      role: currentUser?.role || ''
-    })});
+    body:JSON.stringify({action:'reject', notes:reason, performed_by:currentUser?.username||'user'})});
   if(d.ok){toast('Invoice rejected','info');closeModal('modal-inv');loadInvoices();}
   else toast(d.error||'Error','error');
 }
